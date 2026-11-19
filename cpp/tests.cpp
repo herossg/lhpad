@@ -139,6 +139,17 @@ static HRESULT oleFileDrop(HWND target, const std::vector<fs::path> &files) {
     ClientToScreen(target, &point);
     SetCursorPos(point.x, point.y);
     pump();
+    // Another application's window (a browser, a chat app...) may cover the test window even though it is
+    // topmost. Never drop test files into someone else's window: report the cover instead.
+    if (HWND hit = WindowFromPoint(point); GetAncestor(hit, GA_ROOT) != root) {
+        wchar_t hitClass[128]{};
+        GetClassNameW(hit, hitClass, 128);
+        std::ofstream(exeDir() / L"test-results/ole-diagnosis.txt")
+            << "skipped: covered by " << narrow(hitClass) << " at " << point.x << ',' << point.y;
+        SetWindowPos(root, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        SetCursorPos(before.x, before.y);
+        return S_FALSE;
+    }
     ComPtr<IDataObject> data;
     data.Attach(new TestFileData(files));
     ComPtr<IDropSource> source;
@@ -1160,7 +1171,11 @@ int runTests(App &a, bool full) {
         auto oleSecond = write(L"OLE second file.txt", "OLE second\n");
         count = a.docs.size();
         auto dropResult = oleFileDrop(h, {oleFirst, oleSecond});
-        check(dropResult == DRAGDROP_S_DROP && a.docs.size() == count + 2,
+        if (dropResult == S_FALSE)
+            results.push_back("SKIP Actual OLE CF_HDROP drop: another application's window covered the test "
+                              "window (see ole-diagnosis.txt); file drops stay covered by the tests above");
+        else
+            check(dropResult == DRAGDROP_S_DROP && a.docs.size() == count + 2,
               "Actual OLE CF_HDROP opens multiple Unicode files over native Scintilla (result=" +
                   std::to_string(dropResult) + ", added=" + std::to_string(a.docs.size() - count) + ")");
         auto childPath = write(L"second process 한글.txt", "second process\n");
