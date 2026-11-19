@@ -40,7 +40,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_executable(LHPad WIN32
 
-  main.cpp core.cpp diff.cpp format.cpp dialogs.cpp app.cpp tabs.cpp documents.cpp editing.cpp search.cpp
+  main.cpp core.cpp diff.cpp format.cpp dialogs.cpp app.cpp tabs.cpp documents.cpp editing.cpp search.cpp outline.cpp
 
   compare.cpp hex.cpp preview.cpp tests.cpp shell_package.cpp shell_registration.cpp LHPad.rc
 

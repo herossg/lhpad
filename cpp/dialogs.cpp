@@ -118,8 +118,8 @@ void App::chooseEditorFont() {
     editorFontSize = std::clamp(choice.iPointSize * 10, 600, 7200);
     editorLineSpacing = std::clamp(state.lineSpacing, 0, 24);
     for (const auto &d : docs)
-        if (d->editor)
-            applyEditorFont(d->editor);
+        for (auto view : views(*d))
+            applyEditorFont(view);
     if (compareWindow)
         for (int id : {501, 502})
             if (auto editor = GetDlgItem(compareWindow, id))

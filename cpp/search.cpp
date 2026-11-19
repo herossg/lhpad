@@ -210,6 +210,32 @@ size_t App::markAll() {
     updateFind();
     return count;
 }
+size_t App::bookmarkMatches() {
+    auto d = current();
+    if (!d || !d->editor)
+        fail(L"찾은 줄 북마크는 텍스트 탭에서 사용할 수 있습니다.");
+    if (search.query.empty())
+        return 0;
+    auto h = d->editor;
+    size_t count = 0, lines = 0;
+    Pos previous = -1;
+    {
+        Searching scope(*this);
+        SearchScope borrowed(*this, h);
+        eachMatch(*this, h, search, SIZE_MAX, count, [&](Pos a, Pos) {
+            Pos line = sci(h, SCI_LINEFROMPOSITION, a);
+            if (line != previous) {
+                previous = line;
+                lines++;
+                if (!(sci(h, SCI_MARKERGET, line) & (1 << bookmarkMarker)))
+                    sci(h, SCI_MARKERADD, line, bookmarkMarker);
+            }
+        });
+    }
+    searchMessage = std::to_string(lines) + "줄에 북마크를 표시했습니다.";
+    updateFind();
+    return lines;
+}
 void App::clearMarks() {
     auto d = current();
     if (!d || !d->editor)

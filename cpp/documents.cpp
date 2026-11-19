@@ -84,6 +84,15 @@ void App::configureEditor(HWND h) {
     sci(h, SCI_INDICSETOUTLINEALPHA, markIndicator, 180);
     sci(h, SCI_INDICSETUNDER, markIndicator, 1);
     sci(h, SCI_BRACEHIGHLIGHTINDICATOR, 1, 8);
+    // Margin 2: bookmarks (click to toggle).
+    sci(h, SCI_SETMARGINTYPEN, 2, SC_MARGIN_SYMBOL);
+    sci(h, SCI_SETMARGINMASKN, 2, 1 << bookmarkMarker);
+    sci(h, SCI_SETMARGINWIDTHN, 2, MulDiv(16, dpi, 96));
+    sci(h, SCI_SETMARGINSENSITIVEN, 2, 1);
+    sci(h, SCI_SETMARGINCURSORN, 2, SC_CURSORARROW);
+    sci(h, SCI_MARKERDEFINE, bookmarkMarker, SC_MARK_BOOKMARK);
+    sci(h, SCI_MARKERSETFORE, bookmarkMarker, RGB(0, 105, 92));
+    sci(h, SCI_MARKERSETBACK, bookmarkMarker, RGB(77, 182, 172));
     sci(h, SCI_BRACEBADLIGHTINDICATOR, 1, 9);
     applyEditorSettings(h);
     sci(h, SCI_SETINDENTATIONGUIDES, SC_IV_LOOKBOTH);
@@ -136,7 +145,8 @@ void App::settings() {
     autoIndent = (*fields)[3].checked;
     for (auto &doc : docs)
         if (doc->editor) {
-            applyEditorSettings(doc->editor);
+            for (auto view : views(*doc))
+                applyEditorSettings(view);
             if (braceMatch)
                 highlightBrace(*doc);
         }
@@ -528,6 +538,11 @@ void App::backup() {
             for (int i = 0; i < sci(d.editor, SCI_GETSELECTIONS); i++)
                 selections.push_back({{"Anchor", sci(d.editor, SCI_GETSELECTIONNANCHOR, i)},
                                       {"Caret", sci(d.editor, SCI_GETSELECTIONNCARET, i)}});
+        Json bookmarks = Json::array();
+        if (d.editor)
+            for (Pos line = sci(d.editor, SCI_MARKERNEXT, 0, 1 << bookmarkMarker); line >= 0 && bookmarks.size() < 100000;
+                 line = sci(d.editor, SCI_MARKERNEXT, line + 1, 1 << bookmarkMarker))
+                bookmarks.push_back(line);
         Json s = {{"Id", d.id},
                   {"Path", d.path.empty() ? Json(nullptr) : Json(narrow(d.path.wstring()))},
                   {"Name", d.name},
@@ -544,6 +559,7 @@ void App::backup() {
                   {"Eol", d.editor ? sci(d.editor, SCI_GETEOLMODE) : 0},
                   {"Zoom", d.editor ? sci(d.editor, SCI_GETZOOM) : 0},
                   {"ViewMode", d.viewMode},
+                  {"Bookmarks", bookmarks},
                   {"Stamp", "0001-01-01T00:00:00"},
                   {"OriginalLength", d.disk.size}};
         states.push_back(s);
@@ -565,7 +581,8 @@ void App::backup() {
                     {"BraceMatch", braceMatch},
                     {"FindFolder", narrow(findFolder.wstring())},
                     {"FindFilter", narrow(findFilter)},
-                    {"FindSubfolders", findSubfolders}};
+                    {"FindSubfolders", findSubfolders},
+                    {"OutlineVisible", outlineVisible}};
     Json recent = Json::array();
     for (auto &p : recentFiles)
         recent.push_back(narrow(p.wstring()));
@@ -623,6 +640,7 @@ void App::restore() {
         !session["FindFilter"].get<std::string>().empty())
         findFilter = wide(session["FindFilter"].get<std::string>());
     findSubfolders = session.value("FindSubfolders", true);
+    bool showOutlinePanel = session.value("OutlineVisible", false);
     recentFiles.clear();
     if (session.contains("RecentFiles") && session["RecentFiles"].is_array())
         for (auto &item : session["RecentFiles"])
@@ -683,6 +701,11 @@ void App::restore() {
                     }
                 }
                 sci(d->editor, SCI_SETFIRSTVISIBLELINE, s.value("FirstLine", 0ll));
+                if (s.contains("Bookmarks") && s["Bookmarks"].is_array())
+                    for (auto &line : s["Bookmarks"])
+                        if (line.is_number_integer() && line.get<Pos>() >= 0 &&
+                            line.get<Pos>() < sci(d->editor, SCI_GETLINECOUNT))
+                            sci(d->editor, SCI_MARKERADD, line.get<Pos>(), bookmarkMarker);
                 languages.apply(d->editor, d->language, d->large);
                 int mode = s.value("ViewMode", 0);
                 if (mode >= 0 && mode <= 2)
@@ -699,6 +722,8 @@ void App::restore() {
     }
     if (!docs.empty()) {
         select(std::clamp(session.value("Active", 0), 0, static_cast<int>(docs.size() - 1)));
+        if (showOutlinePanel)
+            showOutline(true);
         for (auto &d : docs)
             if (d->viewMode)
                 refreshPreview(*d, true);
@@ -773,6 +798,12 @@ void App::timer() {
     if (!initialFiles.empty()) {
         auto files = std::exchange(initialFiles, {});
         guard([&] { openPaths(files); });
+    }
+    if (outlineVisible && now >= previewTick) {
+        try {
+            refreshOutline(false); // Cheap when the document has not changed.
+        } catch (...) {
+        }
     }
     if (now >= previewTick)
         for (auto &d : docs)
@@ -963,6 +994,10 @@ LRESULT CALLBACK App::editorProc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id
          m == WM_KEYDOWN && w == VK_RETURN && GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_MENU) >= 0)) {
         a->guard([&] { a->newline(*d, m, w, l); });
         return 0;
+    }
+    if (m == WM_SETFOCUS && h == d->secondary) {
+        std::swap(d->editor, d->secondary); // The focused view becomes the one commands act on.
+        a->update();
     }
     if (m == WM_SETFOCUS)
         for (size_t i = 0; i < a->docs.size(); i++)

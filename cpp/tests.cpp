@@ -748,6 +748,87 @@ int runTests(App &a, bool full) {
             check(!IsWindowVisible(a.resultsList), "Results panel can be hidden");
             a.search = {};
             a.select(indexOf(text.get()));
+            // 1.4 navigation: bookmarks, same-document split and outline.
+            auto marked = [&](Pos line) { return (sci(h, SCI_MARKERGET, line) & (1 << bookmarkMarker)) != 0; };
+            setText(*text, "a\nb\nc\nd");
+            sci(h, SCI_GOTOLINE, 1);
+            a.toggleBookmark();
+            sci(h, SCI_GOTOLINE, 3);
+            a.toggleBookmark();
+            check(marked(1) && marked(3) && !marked(0) && !marked(2), "Ctrl+F2 toggles a bookmark on the caret line");
+            sci(h, SCI_GOTOPOS, 0);
+            a.nextBookmark(false);
+            bool forward = sci(h, SCI_LINEFROMPOSITION, sci(h, SCI_GETCURRENTPOS)) == 1;
+            a.nextBookmark(false);
+            forward = forward && sci(h, SCI_LINEFROMPOSITION, sci(h, SCI_GETCURRENTPOS)) == 3;
+            a.nextBookmark(false);
+            forward = forward && sci(h, SCI_LINEFROMPOSITION, sci(h, SCI_GETCURRENTPOS)) == 1;
+            a.nextBookmark(true);
+            check(forward && sci(h, SCI_LINEFROMPOSITION, sci(h, SCI_GETCURRENTPOS)) == 3,
+                  "F2 / Shift+F2 move between bookmarks and wrap around");
+            check(a.copyBookmarked() == "b\nd", "Copy bookmarked lines joins them with the document line break");
+            check(a.deleteBookmarked() == 2 && all(*text) == "a\nc" && !marked(0) && !marked(1),
+                  "Delete bookmarked lines removes them without moving bookmarks to neighbours");
+            sci(h, SCI_UNDO);
+            check(all(*text) == "a\nb\nc\nd", "Deleting bookmarked lines undoes as one action");
+            a.clearBookmarks();
+            setText(*text, "x1\ny\nx2 x3");
+            a.search = {"x", "", 0};
+            check(a.bookmarkMatches() == 2 && marked(0) && !marked(1) && marked(2),
+                  "Bookmark matches marks each matching line once");
+            a.clearBookmarks();
+            check(!marked(0) && !marked(2), "Clear bookmarks removes all bookmarks");
+            a.search = {};
+            setText(*text, "shared");
+            a.toggleSplit();
+            auto lower = text->secondary;
+            check(lower && sci(lower, SCI_GETDOCPOINTER) == sci(h, SCI_GETDOCPOINTER) && IsWindowVisible(lower) &&
+                      IsWindowVisible(h),
+                  "Split view shows a second editor on the same document");
+            str(lower, SCI_APPENDTEXT, " text", 5);
+            check(all(*text) == "shared text" && text->dirty(), "Edits in either split view change the one document");
+            SendMessageW(lower, WM_SETFOCUS, 0, 0);
+            check(text->editor == lower && text->secondary == h, "Focusing the other split view makes commands target it");
+            SendMessageW(h, WM_SETFOCUS, 0, 0);
+            check(text->editor == h && text->secondary == lower, "Focus returns to the first split view");
+            a.toggleSplit();
+            check(!text->secondary && IsWindow(h) && !IsWindow(lower) && all(*text) == "shared text",
+                  "Closing the split keeps the document and its active editor");
+            auto names = [](const std::vector<OutlineItem> &items) {
+                std::wstring s;
+                for (auto &item : items)
+                    s += std::to_wstring(item.line) + L":" + std::to_wstring(item.depth) + L":" + item.name + L"|";
+                return s;
+            };
+            auto cppOutline = buildOutline("namespace lp {\nclass App {\n    void run();\n};\nint App::start(int x) const {\n"
+                                           "    if (x) return 1;\n    call(x);\n}\nstatic void helper()\n{\n}\n",
+                                           "cpp");
+            check(names(cppOutline) == L"0:0:namespace lp|1:0:class App|4:0:App::start()|8:0:helper()|",
+                  "Outline finds C++ namespaces, classes and definitions but not declarations or calls");
+            check(names(buildOutline("class A:\n    def f(self):\n        pass\ndef g():\n    pass\n", "python")) ==
+                      L"0:0:class A|1:1:f()|3:0:g()|",
+                  "Outline lists Python classes and functions with nesting");
+            check(names(buildOutline("# 제목\n```\n# not\n```\n## Section ##\n", "markdown")) == L"0:0:제목|4:1:Section|",
+                  "Outline lists Markdown headings outside code fences");
+            check(names(buildOutline("CREATE OR REPLACE PROCEDURE dbo.Load AS\nselect 1;\n", "sql")) ==
+                      L"0:0:PROCEDURE dbo.Load|",
+                  "Outline lists SQL objects");
+            check(names(buildOutline("export async function load(a) {\nconst run = async (x) => x;\n}\n", "javascript")) ==
+                      L"0:0:load()|1:0:run()|",
+                  "Outline lists JavaScript functions and arrow functions");
+            check(buildOutline("anything", "normal").empty() && !outlineSupported("normal"),
+                  "Outline is empty for languages without rules");
+            useLanguage("cpp");
+            setText(*text, "int main()\n{\n}\n");
+            a.showOutline(true);
+            check(a.outlineVisible && IsWindowVisible(a.outlineList) && ListView_GetItemCount(a.outlineList) == 1,
+                  "Outline panel shows the active document's symbols");
+            sci(h, SCI_GOTOPOS, sci(h, SCI_GETLENGTH));
+            a.goToOutline(0);
+            check(sci(h, SCI_LINEFROMPOSITION, sci(h, SCI_GETCURRENTPOS)) == 0, "Clicking an outline entry moves to its line");
+            a.showOutline(false);
+            useLanguage("normal");
+            check(!IsWindowVisible(a.outlineList), "Outline panel can be hidden");
         }
         setText(*text, "alpha beta alpha\nalpha");
         a.search = {"alpha", "가나다", 0};

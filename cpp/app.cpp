@@ -28,6 +28,8 @@ static const std::vector<std::pair<int, std::wstring>> toolbarItems = {
     {FollowTail, L"끝 따라가기"},
     {Help, L"단축키 도움말"}};
 Document::~Document() {
+    if (secondary)
+        DestroyWindow(secondary);
     if (controller)
         controller->Close();
     if (previewHost)
@@ -129,6 +131,16 @@ void App::buildMenu() {
     item(s, ResultsPanel, L"검색 결과 창");
     item(s, ResultNext, L"다음 검색 결과\tF4");
     item(s, ResultPrev, L"이전 검색 결과\tShift+F4");
+    auto bookmarkMenu = CreatePopupMenu();
+    AppendMenuW(s, MF_POPUP, reinterpret_cast<UINT_PTR>(bookmarkMenu), L"북마크(&B)");
+    item(bookmarkMenu, BookmarkToggle, L"북마크 표시 / 해제\tCtrl+F2");
+    item(bookmarkMenu, BookmarkNext, L"다음 북마크\tF2");
+    item(bookmarkMenu, BookmarkPrev, L"이전 북마크\tShift+F2");
+    item(bookmarkMenu, BookmarkClear, L"모든 북마크 지우기");
+    sep(bookmarkMenu);
+    item(bookmarkMenu, BookmarkMatches, L"찾은 줄 모두 북마크");
+    item(bookmarkMenu, BookmarkCopy, L"북마크한 줄 복사");
+    item(bookmarkMenu, BookmarkDelete, L"북마크한 줄 삭제");
     viewMenu = root(L"보기(&V)");
     item(viewMenu, Source, L"원문 보기");
     item(viewMenu, Preview, L"미리보기 전환\tCtrl+Shift+V");
@@ -145,6 +157,8 @@ void App::buildMenu() {
     item(viewMenu, ZoomOut, L"축소\tCtrl+-");
     item(viewMenu, ZoomReset, L"기본 배율\tCtrl+0");
     item(viewMenu, EditorFont, L"텍스트 편집기 글꼴…");
+    item(viewMenu, SplitEditor, L"같은 문서 위아래 분할");
+    item(viewMenu, OutlinePanel, L"함수 목록");
     auto foldMenu = CreatePopupMenu();
     AppendMenuW(viewMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(foldMenu), L"코드 접기");
     item(foldMenu, FoldCurrent, L"현재 구간 접기 / 펼치기\tCtrl+Alt+B");
@@ -443,6 +457,7 @@ void App::create(int show) {
     }
     buildToolbar();
     createResultsPanel();
+    createOutlinePanel();
     DragAcceptFiles(window, TRUE);
     restorePlacement(show);
     ShowWindow(window, show);
@@ -482,7 +497,13 @@ void App::layout() {
         statusHeight = MulDiv(26, dpi, 96);
     MoveWindow(toolbar, 0, 0, width, bar, TRUE);
     int panel = resultsVisible ? std::clamp(height / 3, MulDiv(120, dpi, 96), MulDiv(260, dpi, 96)) : 0;
-    MoveWindow(tabs, 0, bar, width, std::max(1, height - bar - statusHeight - panel), TRUE);
+    int outline = outlineVisible ? std::clamp(width / 5, MulDiv(200, dpi, 96), MulDiv(320, dpi, 96)) : 0;
+    int tabsHeight = std::max(1, height - bar - statusHeight - panel);
+    MoveWindow(tabs, 0, bar, std::max(1, width - outline), tabsHeight, TRUE);
+    if (outlineList && outlineVisible) {
+        MoveWindow(outlineList, width - outline, bar, outline, tabsHeight, TRUE);
+        ListView_SetColumnWidth(outlineList, 0, std::max(MulDiv(80, dpi, 96), outline - MulDiv(80, dpi, 96)));
+    }
     MoveWindow(status, 0, std::max(0, height - statusHeight), width, statusHeight, TRUE);
     if (resultsList && resultsVisible) {
         int top = std::max(bar, height - statusHeight - panel), label = MulDiv(24, dpi, 96);
@@ -507,10 +528,22 @@ void App::layout() {
         if (d.editor) {
             bool show = visible && d.viewMode != 1;
             int ew = d.viewMode == 2 ? dw / 2 : dw;
-            MoveWindow(d.editor, dx, y, ew, h, TRUE);
-            ShowWindow(d.editor, show ? SW_SHOW : SW_HIDE);
-            if (show)
-                SetWindowPos(d.editor, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            if (d.secondary) {
+                HWND upper = d.topPane ? d.topPane : d.editor, lower = upper == d.editor ? d.secondary : d.editor;
+                int gap = MulDiv(4, dpi, 96), half = (h - gap) / 2;
+                MoveWindow(upper, dx, y, ew, std::max(1, half), TRUE);
+                MoveWindow(lower, dx, y + half + gap, ew, std::max(1, h - half - gap), TRUE);
+                for (auto view : {upper, lower}) {
+                    ShowWindow(view, show ? SW_SHOW : SW_HIDE);
+                    if (show)
+                        SetWindowPos(view, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                }
+            } else {
+                MoveWindow(d.editor, dx, y, ew, h, TRUE);
+                ShowWindow(d.editor, show ? SW_SHOW : SW_HIDE);
+                if (show)
+                    SetWindowPos(d.editor, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            }
         }
         if (d.hexWindow) {
             MoveWindow(d.hexWindow, dx, y, dw, h, TRUE);
@@ -544,6 +577,7 @@ void App::select(int index) {
     SetFocus(d->binary ? d->hexWindow : d->viewMode == 1 ? d->previewHost : d->editor);
     if (d->viewMode)
         refreshPreview(*d);
+    refreshOutline(false);
     update();
 }
 void App::update() {
@@ -622,6 +656,8 @@ void App::update() {
     };
     check(AutoIndent, autoIndent);
     check(ResultsPanel, resultsVisible);
+    check(OutlinePanel, outlineVisible);
+    check(SplitEditor, d && d->secondary);
     check(WhiteSpace, whiteSpace);
     check(EolVisible, eolVisible);
     check(ControlVisible, controlVisible);
@@ -684,7 +720,9 @@ void App::command(int id) {
         if (id >= LanguageSelect && id < LanguageSelect + static_cast<int>(languages.items.size())) {
             if (d && !d->binary) {
                 d->language = languages.items[id - LanguageSelect].name;
-                languages.apply(d->editor, d->language, d->large);
+                for (auto view : views(*d))
+                    languages.apply(view, d->language, d->large);
+                refreshOutline(true);
                 refreshPreview(*d, true);
             }
             return;
@@ -849,6 +887,39 @@ void App::command(int id) {
             break;
         case ResultPrev:
             navigateHits(true);
+            break;
+        case BookmarkToggle:
+            toggleBookmark();
+            break;
+        case BookmarkNext:
+            nextBookmark(false);
+            break;
+        case BookmarkPrev:
+            nextBookmark(true);
+            break;
+        case BookmarkClear:
+            clearBookmarks();
+            break;
+        case BookmarkMatches:
+            if (search.query.empty())
+                showFind(false);
+            else
+                message(std::to_wstring(bookmarkMatches()) + L"줄에 북마크를 표시했습니다.");
+            break;
+        case BookmarkCopy:
+            copyBookmarked();
+            break;
+        case BookmarkDelete:
+            if (d && d->editor &&
+                ask(L"북마크한 줄을 모두 삭제할까요? 실행 취소(Ctrl+Z)로 되돌릴 수 있습니다.", L"북마크한 줄 삭제",
+                    MB_YESNO | MB_ICONWARNING) == IDYES)
+                deleteBookmarked();
+            break;
+        case SplitEditor:
+            toggleSplit();
+            break;
+        case OutlinePanel:
+            showOutline(!outlineVisible);
             break;
         case Find:
             showFind(false);
@@ -1021,15 +1092,16 @@ void App::command(int id) {
                 L"Ctrl+H: 찾기 / 바꾸기\nCtrl+Shift+R: 매크로 녹화\nCtrl+Shift+P: 매크로 실행\nCtrl+Alt+C: "
                 L"두 탭 비교\nCtrl+Alt+B: 현재 구간 접기\nCtrl+Shift+V: 미리보기\nCtrl+Alt+V: 분할 보기\n"
                 L"Ctrl+Q: 주석 넣기 / 빼기\nCtrl+B: 짝 괄호로 이동\nCtrl+Shift+U / Ctrl+U: 대문자 / 소문자\n"
-                L"Ctrl+Shift+T: 닫은 탭 다시 열기\nCtrl+Shift+F: 파일에서 찾기\nF4 / Shift+F4: 다음 / 이전 검색 결과",
+                L"Ctrl+Shift+T: 닫은 탭 다시 열기\nCtrl+Shift+F: 파일에서 찾기\nF4 / Shift+F4: 다음 / 이전 검색 결과\n"
+                L"Ctrl+F2 / F2 / Shift+F2: 북마크 표시 / 다음 / 이전",
                 L"편집 단축키");
             break;
         }
         for (auto &doc : docs)
-            if (doc->editor) {
-                sci(doc->editor, SCI_SETVIEWWS, whiteSpace ? SCWS_VISIBLEALWAYS : SCWS_INVISIBLE);
-                sci(doc->editor, SCI_SETVIEWEOL, eolVisible);
-                sci(doc->editor, SCI_SETCONTROLCHARSYMBOL, controlVisible ? 0 : 32);
+            for (auto view : views(*doc)) {
+                sci(view, SCI_SETVIEWWS, whiteSpace ? SCWS_VISIBLEALWAYS : SCWS_INVISIBLE);
+                sci(view, SCI_SETVIEWEOL, eolVisible);
+                sci(view, SCI_SETCONTROLCHARSYMBOL, controlVisible ? 0 : 32);
             }
         updateFind();
     });
@@ -1173,6 +1245,8 @@ bool App::shortcut(MSG &m) {
         id = shift ? ComparePrev : CompareNext;
     else if (key == VK_F4 && !ctrl && !alt)
         id = shift ? ResultPrev : ResultNext;
+    else if (key == VK_F2 && !alt)
+        id = ctrl ? BookmarkToggle : shift ? BookmarkPrev : BookmarkNext;
     if (id) {
         command(id);
         return true;
@@ -1305,6 +1379,23 @@ LRESULT App::notify(NMHDR *n) {
         }
         return 0;
     }
+    if (outlineList && n->hwndFrom == outlineList) {
+        if (n->code == LVN_GETDISPINFOW) {
+            auto &item = reinterpret_cast<NMLVDISPINFOW *>(n)->item;
+            if ((item.mask & LVIF_TEXT) && item.pszText && item.cchTextMax > 0 && item.iItem >= 0 &&
+                item.iItem < static_cast<int>(outlineItems.size())) {
+                auto &entry = outlineItems[static_cast<size_t>(item.iItem)];
+                auto text = item.iSubItem == 0 ? std::wstring(static_cast<size_t>(entry.depth) * 3, L' ') + entry.name
+                                               : std::to_wstring(entry.line + 1);
+                wcsncpy_s(item.pszText, item.cchTextMax, text.c_str(), _TRUNCATE);
+            }
+        } else if (n->code == LVN_ITEMACTIVATE || n->code == NM_CLICK) {
+            int index = reinterpret_cast<NMITEMACTIVATE *>(n)->iItem;
+            if (index >= 0 && !busy && !playing)
+                guard([&] { goToOutline(index); });
+        }
+        return 0;
+    }
     if (n->hwndFrom == tabs && n->code == TCN_SELCHANGE) {
         select(TabCtrl_GetCurSel(tabs));
         return 0;
@@ -1355,6 +1446,15 @@ LRESULT App::notify(NMHDR *n) {
             update();
             if (s.updated & SC_UPDATE_V_SCROLL)
                 syncCompare(*d);
+        }
+        break;
+    case SCN_MARGINCLICK:
+        if (s.margin == 2) {
+            Pos line = sci(d->editor, SCI_LINEFROMPOSITION, s.position);
+            if (sci(d->editor, SCI_MARKERGET, line) & (1 << bookmarkMarker))
+                sci(d->editor, SCI_MARKERDELETE, line, bookmarkMarker);
+            else
+                sci(d->editor, SCI_MARKERADD, line, bookmarkMarker);
         }
         break;
     case SCN_CHARADDED:

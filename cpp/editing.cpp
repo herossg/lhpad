@@ -1092,14 +1092,14 @@ void App::toggleRecord() {
     recorded.clear();
     recording = true;
     for (auto &p : docs)
-        if (p->editor)
-            sci(p->editor, SCI_STARTRECORD);
+        for (auto view : views(*p))
+            sci(view, SCI_STARTRECORD);
     update();
 }
 void App::stopRecord() {
     for (auto &p : docs)
-        if (p->editor)
-            sci(p->editor, SCI_STOPRECORD);
+        for (auto view : views(*p))
+            sci(view, SCI_STOPRECORD);
     recording = false;
     lastMacro = recorded;
     persistMacros();

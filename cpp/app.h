@@ -88,6 +88,15 @@ enum Command {
     ResultsPanel,
     ResultNext,
     ResultPrev,
+    BookmarkToggle,
+    BookmarkNext,
+    BookmarkPrev,
+    BookmarkClear,
+    BookmarkMatches,
+    BookmarkCopy,
+    BookmarkDelete,
+    SplitEditor,
+    OutlinePanel,
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,
@@ -116,12 +125,24 @@ struct SearchHit {
     std::wstring text;
 };
 inline constexpr size_t hitLimit = 100000;
-inline constexpr int markIndicator = 10;
+inline constexpr int markIndicator = 10, bookmarkMarker = 24;
+struct OutlineItem {
+    std::wstring name;
+    Pos line = 0;
+    int depth = 0;
+};
+// Light-weight symbol list (functions, classes, headings) for the outline panel. Empty when the
+// language has no rules.
+std::vector<OutlineItem> buildOutline(const std::string &text, const std::string &language);
+bool outlineSupported(const std::string &language);
 struct Document {
     std::string id = guid(), name, language = "normal";
     fs::path path;
     Encoding encoding;
     HWND editor = nullptr, hexWindow = nullptr, previewHost = nullptr;
+    // Same-document split: `secondary` shares editor's Scintilla document. Focus swaps the two so
+    // `editor` is always the view in use; `topPane` keeps their on-screen order.
+    HWND secondary = nullptr, topPane = nullptr;
     std::unique_ptr<BinaryBuffer> binary;
     ComPtr<ICoreWebView2Controller> controller;
     ComPtr<ICoreWebView2> browser;
@@ -201,6 +222,11 @@ class App {
     fs::path findFolder;
     std::wstring findFilter = L"*.*";
     bool findSubfolders = true;
+    HWND outlineList = nullptr;
+    bool outlineVisible = false;
+    std::vector<OutlineItem> outlineItems;
+    std::string outlineDocId;
+    uint64_t outlineRevision = ~uint64_t{};
     std::vector<MacroStep> recorded, lastMacro;
     std::vector<SavedMacroEntry> savedMacros;
     std::set<std::string> compareIds;
@@ -259,6 +285,18 @@ class App {
                         const SearchOptions &options);
     void goToHit(int index);
     void navigateHits(bool backwards);
+    std::vector<HWND> views(const Document &d) const;
+    void toggleBookmark();
+    void nextBookmark(bool backwards);
+    void clearBookmarks();
+    size_t bookmarkMatches();
+    std::string copyBookmarked();
+    size_t deleteBookmarked();
+    void toggleSplit();
+    void createOutlinePanel();
+    void showOutline(bool visible);
+    void refreshOutline(bool force);
+    void goToOutline(int index);
     void select(int index);
     void open(const fs::path &path, std::optional<bool> binary = {}, std::optional<Encoding> encoding = {});
     void openPaths(const std::vector<std::string> &paths, bool activate = true);

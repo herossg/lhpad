@@ -38,7 +38,7 @@ try {
 
     if($LASTEXITCODE){throw 'Resource compile failed.'}
 
-    $taskSources=@('core.cpp','diff.cpp','format.cpp','dialogs.cpp','app.cpp','tabs.cpp','documents.cpp','editing.cpp','search.cpp','compare.cpp','hex.cpp','preview.cpp','tests.cpp','shell_package.cpp','shell_registration.cpp','main.cpp','vendor/pugixml/pugixml.cpp')
+    $taskSources=@('core.cpp','diff.cpp','format.cpp','dialogs.cpp','app.cpp','tabs.cpp','documents.cpp','editing.cpp','search.cpp','outline.cpp','compare.cpp','hex.cpp','preview.cpp','tests.cpp','shell_package.cpp','shell_registration.cpp','main.cpp','vendor/pugixml/pugixml.cpp')
 
     $taskHeaderTime=(Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.h' | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc
 

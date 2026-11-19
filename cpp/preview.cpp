@@ -20,6 +20,8 @@ void App::setView(int mode) {
         return;
     if (mode && !previewKind(*d))
         fail(L"미리보기는 Markdown, HTML, SVG에서 지원합니다. 언어 메뉴에서 문서 종류를 지정할 수 있습니다.");
+    if (mode && d->secondary)
+        toggleSplit(); // Preview panes and the same-document split share the same space.
     compareIds.clear();
     d->viewMode = mode;
     if (mode)
