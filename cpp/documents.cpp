@@ -67,8 +67,20 @@ void App::configureEditor(HWND h) {
     sci(h, SCI_SETMULTIPASTE, SC_MULTIPASTE_EACH);
     sci(h, SCI_SETRECTANGULARSELECTIONMODIFIER, SCMOD_ALT);
     sci(h, SCI_SETVIRTUALSPACEOPTIONS, SCVS_RECTANGULARSELECTION);
-    sci(h, SCI_SETTABWIDTH, 4);
-    sci(h, SCI_SETUSETABS, 0);
+    // Brace highlights use container indicators so language changes (STYLECLEARALL) keep them.
+    sci(h, SCI_INDICSETSTYLE, 8, INDIC_ROUNDBOX);
+    sci(h, SCI_INDICSETFORE, 8, RGB(0, 150, 136));
+    sci(h, SCI_INDICSETALPHA, 8, 70);
+    sci(h, SCI_INDICSETOUTLINEALPHA, 8, 200);
+    sci(h, SCI_INDICSETUNDER, 8, 1);
+    sci(h, SCI_INDICSETSTYLE, 9, INDIC_ROUNDBOX);
+    sci(h, SCI_INDICSETFORE, 9, RGB(220, 50, 47));
+    sci(h, SCI_INDICSETALPHA, 9, 70);
+    sci(h, SCI_INDICSETOUTLINEALPHA, 9, 200);
+    sci(h, SCI_INDICSETUNDER, 9, 1);
+    sci(h, SCI_BRACEHIGHLIGHTINDICATOR, 1, 8);
+    sci(h, SCI_BRACEBADLIGHTINDICATOR, 1, 9);
+    applyEditorSettings(h);
     sci(h, SCI_SETINDENTATIONGUIDES, SC_IV_LOOKBOTH);
     sci(h, SCI_SETEOLMODE, SC_EOL_CRLF);
     sci(h, SCI_SETSCROLLWIDTH, 1);
@@ -85,6 +97,101 @@ void App::configureEditor(HWND h) {
                      : RGB(255, 239, 191));
     }
     applyEditorFont(h);
+}
+void App::applyEditorSettings(HWND h) {
+    sci(h, SCI_SETTABWIDTH, tabWidth);
+    sci(h, SCI_SETINDENT, 0); // Indent size follows the tab width.
+    sci(h, SCI_SETUSETABS, useTabs);
+    if (!braceMatch)
+        sci(h, SCI_BRACEHIGHLIGHT, INVALID_POSITION, INVALID_POSITION);
+}
+void App::settings() {
+    auto fields = inputDialog(window, L"설정",
+                              {{L"탭 너비 (1~16)", std::to_wstring(tabWidth)},
+                               {L"Tab 키로 탭 문자 넣기 (끄면 공백)", L"", true, useTabs},
+                               {L"괄호 짝 강조", L"", true, braceMatch},
+                               {L"자동 들여쓰기", L"", true, autoIndent}},
+                              L"모든 텍스트 탭에 바로 적용되고 다음 실행에도 유지됩니다.");
+    if (!fields)
+        return;
+    int width = 0;
+    try {
+        size_t used = 0;
+        width = std::stoi((*fields)[0].value, &used);
+        if (used != (*fields)[0].value.size())
+            width = 0;
+    } catch (...) {
+        width = 0;
+    }
+    if (width < 1 || width > 16)
+        fail(L"탭 너비는 1~16 사이의 숫자로 입력해 주세요.");
+    tabWidth = width;
+    useTabs = (*fields)[1].checked;
+    braceMatch = (*fields)[2].checked;
+    autoIndent = (*fields)[3].checked;
+    for (auto &doc : docs)
+        if (doc->editor) {
+            applyEditorSettings(doc->editor);
+            if (braceMatch)
+                highlightBrace(*doc);
+        }
+}
+void App::addRecent(const fs::path &path) {
+    if (path.empty())
+        return;
+    std::erase_if(recentFiles, [&](const fs::path &p) { return !_wcsicmp(p.c_str(), path.c_str()); });
+    recentFiles.insert(recentFiles.begin(), path);
+    if (recentFiles.size() > recentLimit)
+        recentFiles.resize(recentLimit);
+    rebuildRecentMenu();
+}
+void App::rebuildRecentMenu() {
+    if (!recentMenu)
+        return;
+    while (GetMenuItemCount(recentMenu) > 0)
+        DeleteMenu(recentMenu, 0, MF_BYPOSITION);
+    if (recentFiles.empty()) {
+        AppendMenuW(recentMenu, MF_STRING | MF_GRAYED, 0, L"(최근 파일 없음)");
+        return;
+    }
+    for (size_t i = 0; i < recentFiles.size(); i++) {
+        std::wstring path = recentFiles[i].wstring(), escaped;
+        for (auto c : path) {
+            if (c == L'&')
+                escaped += L'&';
+            escaped += c;
+        }
+        auto label = (i < 9 ? L"&" + std::to_wstring(i + 1) : std::to_wstring(i + 1)) + L"  " + escaped;
+        AppendMenuW(recentMenu, MF_STRING, RecentFile + static_cast<int>(i), label.c_str());
+    }
+    AppendMenuW(recentMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(recentMenu, MF_STRING, RecentClear, L"목록 지우기");
+}
+void App::openRecent(size_t index) {
+    if (index >= recentFiles.size())
+        return;
+    auto path = recentFiles[index];
+    if (!disk::exists(path)) {
+        if (ask(path.wstring() + L"\n\n파일을 찾을 수 없습니다. 최근 파일 목록에서 제거할까요?", L"최근 파일",
+                MB_YESNO | MB_ICONWARNING) == IDYES) {
+            recentFiles.erase(recentFiles.begin() + static_cast<std::ptrdiff_t>(index));
+            rebuildRecentMenu();
+        }
+        return;
+    }
+    openPaths({narrow(path.wstring())});
+}
+void App::reopenClosed() {
+    while (!closedTabs.empty()) {
+        auto tab = closedTabs.back();
+        closedTabs.pop_back();
+        if (!disk::exists(tab.path))
+            continue;
+        open(tab.path, tab.binary);
+        addRecent(tab.path);
+        return;
+    }
+    message(L"다시 열 수 있는 닫은 탭이 없습니다.");
 }
 HWND App::createEditor(Document *d, HWND parent) {
     HWND h = CreateWindowExW(0, L"Scintilla", nullptr,
@@ -208,6 +315,7 @@ void App::openPaths(const std::vector<std::string> &paths, bool activate) {
             if (disk::is_directory(p))
                 continue;
             open(p);
+            addRecent(p);
         } catch (const std::exception &e) {
             message(wide(e.what()), L"파일 열기", MB_OK | MB_ICONWARNING);
         }
@@ -290,6 +398,7 @@ bool App::save(Document &d, bool saveAs) {
     d.disk = stamp(path);
     d.notifiedValid = false;
     d.snapshotRevision = ~uint64_t{};
+    addRecent(path);
     return true;
 }
 bool App::closeTab(int index) {
@@ -304,6 +413,14 @@ bool App::closeTab(int index) {
             return false;
     }
     compareIds.erase(d->id);
+    if (!d->path.empty()) {
+        closedTabs.push_back({d->path, d->binary != nullptr});
+        if (closedTabs.size() > closedLimit)
+            closedTabs.erase(closedTabs.begin());
+        addRecent(d->path);
+    }
+    if (dragTab == d->id)
+        dragTab.clear();
     TabCtrl_DeleteItem(tabs, index);
     docs.erase(docs.begin() + index);
     active = -1;
@@ -437,7 +554,14 @@ void App::backup() {
                     {"AutoIndent", autoIndent},
                     {"EditorFont", editorFont},
                     {"EditorFontSize", editorFontSize},
-                    {"EditorLineSpacing", editorLineSpacing}};
+                    {"EditorLineSpacing", editorLineSpacing},
+                    {"TabWidth", tabWidth},
+                    {"UseTabs", useTabs},
+                    {"BraceMatch", braceMatch}};
+    Json recent = Json::array();
+    for (auto &p : recentFiles)
+        recent.push_back(narrow(p.wstring()));
+    session["RecentFiles"] = recent;
     writeJson(profile / L"session.json", session);
 }
 void App::restore() {
@@ -481,6 +605,19 @@ void App::restore() {
         editorFontSize = std::clamp(session["EditorFontSize"].get<int>(), 600, 7200);
     if (session.contains("EditorLineSpacing") && session["EditorLineSpacing"].is_number_integer())
         editorLineSpacing = std::clamp(session["EditorLineSpacing"].get<int>(), 0, 24);
+    if (session.contains("TabWidth") && session["TabWidth"].is_number_integer())
+        tabWidth = std::clamp(session["TabWidth"].get<int>(), 1, 16);
+    useTabs = session.value("UseTabs", false);
+    braceMatch = session.value("BraceMatch", true);
+    recentFiles.clear();
+    if (session.contains("RecentFiles") && session["RecentFiles"].is_array())
+        for (auto &item : session["RecentFiles"])
+            if (item.is_string() && !item.get<std::string>().empty() && recentFiles.size() < recentLimit)
+                recentFiles.push_back(wide(item.get<std::string>()));
+    rebuildRecentMenu();
+    for (auto &doc : docs)
+        if (doc->editor)
+            applyEditorSettings(doc->editor);
     std::string errors;
     for (auto &s : session["Documents"]) {
         std::shared_ptr<Document> d;

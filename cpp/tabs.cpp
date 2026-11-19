@@ -168,4 +168,56 @@ bool App::tabCloseMessage(UINT message, WPARAM w, LPARAM l) {
     (void)w;
     return false;
 }
+void App::closeTabs(int mode) {
+    if (busy || playing || active < 0)
+        return;
+    auto keep = docs[active]->id;
+    std::vector<std::string> ids;
+    for (int i = 0; i < static_cast<int>(docs.size()); i++)
+        if (mode == 2 || (mode == 0 && i != active) || (mode == 1 && i > active))
+            ids.push_back(docs[i]->id);
+    // Close from the right so a cancelled save prompt leaves the remaining tabs in order.
+    for (auto it = ids.rbegin(); it != ids.rend(); ++it) {
+        auto found = std::find_if(docs.begin(), docs.end(), [&](auto &d) { return d->id == *it; });
+        if (found == docs.end())
+            continue;
+        if (!closeTab(static_cast<int>(found - docs.begin())))
+            break;
+    }
+    if (mode != 2)
+        for (size_t i = 0; i < docs.size(); i++)
+            if (docs[i]->id == keep) {
+                select(static_cast<int>(i));
+                break;
+            }
+}
+void App::moveTab(int from, int to) {
+    int count = static_cast<int>(docs.size());
+    if (from < 0 || to < 0 || from >= count || to >= count || from == to)
+        return;
+    auto doc = docs[from];
+    auto activeId = active >= 0 && active < count ? docs[active]->id : doc->id;
+    docs.erase(docs.begin() + from);
+    docs.insert(docs.begin() + to, doc);
+    TabCtrl_DeleteItem(tabs, from);
+    auto label = wide(doc->name);
+    TCITEMW item{};
+    item.mask = TCIF_TEXT | TCIF_IMAGE;
+    item.pszText = label.data();
+    item.iImage = doc->dirty() ? 1 : 0;
+    TabCtrl_InsertItem(tabs, to, &item);
+    for (int i = 0; i < count; i++)
+        if (docs[i]->id == activeId)
+            active = i;
+    TabCtrl_SetCurSel(tabs, active);
+    hotTabClose = -1;
+    update();
+    InvalidateRect(tabs, nullptr, FALSE);
+}
+void App::copyPath() {
+    auto d = current();
+    if (!d || d->path.empty())
+        fail(L"저장된 파일이 아니어서 복사할 경로가 없습니다.");
+    copyToClipboard(d->path.wstring(), window);
+}
 } // namespace lp

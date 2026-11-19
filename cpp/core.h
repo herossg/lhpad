@@ -152,6 +152,9 @@ class BinaryBuffer {
 struct Language {
     std::string name, display, lexer;
 };
+struct CommentTokens {
+    std::string line, start, end;
+};
 class Languages {
     pugi::xml_document styles, words;
 
@@ -159,6 +162,7 @@ class Languages {
     std::vector<Language> items;
     Languages();
     std::string detect(const fs::path &path) const;
+    CommentTokens comment(const std::string &name) const;
     void apply(HWND sci, const std::string &name, bool large = false) const;
 };
 inline LRESULT sci(HWND h, UINT m, WPARAM w = 0, LPARAM l = 0) {
@@ -168,6 +172,7 @@ inline LRESULT str(HWND h, UINT m, const std::string &s, WPARAM w = 0) {
     return sci(h, m, w, reinterpret_cast<LPARAM>(s.c_str()));
 }
 std::string textRange(HWND sci, Pos start, Pos count);
+void copyToClipboard(const std::wstring &text, HWND owner);
 std::string formatText(const std::string &input, const std::string &language, const std::string &eol);
 std::vector<std::string> sqlTokens(const std::string &s);
 std::string markdown(const std::string &s);

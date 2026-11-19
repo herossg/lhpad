@@ -598,6 +598,109 @@ int runTests(App &a, bool full) {
         check(all(*text) == "  a\n  \n\tb\n\t", "Multi-caret Enter preserves each original indentation");
         sci(h, SCI_UNDO);
         check(all(*text) == "  a\n\tb", "Multi-caret auto-indent grouped undo");
+        {
+            // 1.2 editing basics: comments, case, braces, recent files and tab management.
+            auto indexOf = [&](const Document *doc) {
+                for (size_t i = 0; i < a.docs.size(); i++)
+                    if (a.docs[i].get() == doc)
+                        return static_cast<int>(i);
+                return -1;
+            };
+            a.select(indexOf(text.get()));
+            auto useLanguage = [&](const char *name) {
+                text->language = name;
+                a.languages.apply(h, name);
+            };
+            useLanguage("cpp");
+            setText(*text, "  a\n\n  b");
+            sci(h, SCI_SETSEL, 0, sci(h, SCI_GETLENGTH));
+            a.toggleComment();
+            check(all(*text) == "  // a\n\n  // b", "Line comment toggle keeps indentation and skips blank lines");
+            a.toggleComment();
+            check(all(*text) == "  a\n\n  b", "Line comment toggle removes its own marker");
+            sci(h, SCI_UNDO);
+            check(all(*text) == "  // a\n\n  // b", "Comment toggle undoes as one action");
+            setText(*text, "x();");
+            sci(h, SCI_GOTOPOS, 2);
+            a.toggleComment();
+            check(all(*text) == "// x();" && sci(h, SCI_GETCURRENTPOS) == 5,
+                  "Comment toggle without selection keeps the caret on the same character");
+            useLanguage("html");
+            setText(*text, "  <p>x</p>");
+            sci(h, SCI_GOTOPOS, 4);
+            a.toggleComment();
+            check(all(*text) == "  <!-- <p>x</p> -->", "HTML block comment wraps the current line text");
+            a.toggleComment();
+            check(all(*text) == "  <p>x</p>", "HTML block comment toggle unwraps the selection");
+            useLanguage("normal");
+            bool refused = false;
+            try {
+                a.toggleComment();
+            } catch (const std::exception &) {
+                refused = true;
+            }
+            check(refused && all(*text) == "  <p>x</p>", "Comment toggle refuses languages without markers");
+            setText(*text, "hello wORLD don't");
+            sci(h, SCI_SETSEL, 0, 5);
+            a.command(UpperCase);
+            check(all(*text) == "HELLO wORLD don't", "Upper case converts only the selection");
+            sci(h, SCI_SETSEL, 0, sci(h, SCI_GETLENGTH));
+            a.command(LowerCase);
+            check(all(*text) == "hello world don't", "Lower case converts the selection");
+            a.titleCase();
+            check(all(*text) == "Hello World Don't" && sci(h, SCI_GETSELECTIONSTART) == 0 &&
+                      sci(h, SCI_GETSELECTIONEND) == sci(h, SCI_GETLENGTH),
+                  "Title case keeps apostrophes inside words and the selection");
+            setText(*text, "한글 abc");
+            sci(h, SCI_SETSEL, 0, sci(h, SCI_GETLENGTH));
+            a.titleCase();
+            check(all(*text) == "한글 Abc", "Title case leaves Korean text unchanged");
+            sci(h, SCI_UNDO);
+            check(all(*text) == "한글 abc", "Title case undoes as one action");
+            setText(*text, "f(a[b]c)");
+            sci(h, SCI_GOTOPOS, 1);
+            a.jumpBrace();
+            check(sci(h, SCI_GETCURRENTPOS) == 8, "Brace jump from an opening brace lands after its partner");
+            a.jumpBrace();
+            check(sci(h, SCI_GETCURRENTPOS) == 1, "Brace jump returns before the opening brace");
+            auto savedRecent = a.recentFiles;
+            a.recentFiles.clear();
+            for (int i = 0; i < 20; i++)
+                a.addRecent(fixture / (L"recent-" + std::to_wstring(i) + L".txt"));
+            a.addRecent(fixture / L"RECENT-5.txt");
+            check(a.recentFiles.size() == recentLimit && a.recentFiles.front().filename() == L"RECENT-5.txt" &&
+                      std::none_of(a.recentFiles.begin() + 1, a.recentFiles.end(),
+                                   [](const fs::path &p) { return !_wcsicmp(p.filename().c_str(), L"recent-5.txt"); }),
+                  "Recent files drop case-insensitive duplicates and keep the newest 15");
+            check(GetMenuItemCount(a.recentMenu) == static_cast<int>(recentLimit) + 2, "Recent file menu lists entries and a clear command");
+            a.recentFiles = savedRecent;
+            a.rebuildRecentMenu();
+            auto count = a.docs.size();
+            auto first = a.newDocument(), second = a.newDocument();
+            int left = indexOf(first.get()), right = indexOf(second.get());
+            a.select(left);
+            a.moveTab(left, right);
+            check(indexOf(first.get()) == right && indexOf(second.get()) == left && a.active == right &&
+                      TabCtrl_GetCurSel(a.tabs) == right && TabCtrl_GetItemCount(a.tabs) == static_cast<int>(a.docs.size()),
+                  "Moving a tab reorders documents and keeps the moved tab active");
+            a.select(left);
+            a.closeTabs(1);
+            check(a.docs.size() == count + 1 && indexOf(second.get()) >= 0 && indexOf(first.get()) < 0,
+                  "Close tabs to the right keeps the active tab and those on its left");
+            a.closeTab(indexOf(second.get()));
+            auto reopenPath = write(L"reopen.txt", "reopen");
+            a.open(reopenPath);
+            a.closeTab(static_cast<int>(a.docs.size() - 1));
+            check(!a.closedTabs.empty() && a.closedTabs.back().path == reopenPath, "Closing a saved tab remembers it");
+            a.reopenClosed();
+            check(a.current() && a.current()->path == reopenPath && a.docs.size() == count + 1,
+                  "Reopen closed tab restores the last closed file");
+            a.closeTab(a.active);
+            a.recentFiles = savedRecent;
+            a.rebuildRecentMenu();
+            a.select(indexOf(text.get()));
+            sci(h, SCI_SETEOLMODE, SC_EOL_LF);
+        }
         setText(*text, "alpha beta alpha\nalpha");
         a.search = {"alpha", "가나다", 0};
         sci(h, SCI_SETSEL, 2, 5);

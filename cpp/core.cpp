@@ -657,6 +657,22 @@ std::string textRange(HWND h, Pos start, Pos count) {
     s.resize(static_cast<size_t>(count));
     return s;
 }
+void copyToClipboard(const std::wstring &text, HWND owner) {
+    if (!OpenClipboard(owner))
+        fail(L"클립보드를 열 수 없습니다.");
+    EmptyClipboard();
+    auto memory = GlobalAlloc(GMEM_MOVEABLE, (text.size() + 1) * sizeof(wchar_t));
+    if (!memory) {
+        CloseClipboard();
+        fail(L"메모리가 부족합니다.");
+    }
+    auto p = GlobalLock(memory);
+    memcpy(p, text.c_str(), (text.size() + 1) * sizeof(wchar_t));
+    GlobalUnlock(memory);
+    if (!SetClipboardData(CF_UNICODETEXT, memory))
+        GlobalFree(memory);
+    CloseClipboard();
+}
 Languages::Languages() {
     auto dir = winPath(exeDir() / L"data");
     for (auto &j : readJson(dir / L"languages.json")) {
@@ -692,6 +708,24 @@ std::string Languages::detect(const fs::path &p) const {
             }
     }
     return "normal";
+}
+CommentTokens Languages::comment(const std::string &name) const {
+    // Notepad++ langs.xml carries commentLine / commentStart / commentEnd per language.
+    CommentTokens tokens;
+    for (auto l : words.child("NotepadPlus").child("Languages").children("Language"))
+        if (name == l.attribute("name").as_string()) {
+            tokens.line = l.attribute("commentLine").as_string();
+            tokens.start = l.attribute("commentStart").as_string();
+            tokens.end = l.attribute("commentEnd").as_string();
+            break;
+        }
+    if (name == "markdown" && tokens.line.empty() && tokens.start.empty()) {
+        tokens.start = "<!--";
+        tokens.end = "-->";
+    }
+    if (tokens.start.empty() != tokens.end.empty())
+        tokens.start.clear(), tokens.end.clear();
+    return tokens;
 }
 void Languages::apply(HWND h, const std::string &name, bool large) const {
     using CreateLexerFn = Scintilla::ILexer5 *(__stdcall *)(const char *);

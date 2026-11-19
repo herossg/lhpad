@@ -1,5 +1,6 @@
 #include "app.h"
 #include "macro_commands.h"
+#include <cstring>
 #include <windowsx.h>
 namespace lp {
 static std::string eol(HWND h) {
@@ -706,6 +707,222 @@ void App::sort(bool descending) {
     step.descending = descending;
     recordAction(step);
 }
+void App::changeCase(int message) {
+    auto d = current();
+    if (!d || !d->editor || d->monitor)
+        return;
+    sci(d->editor, message); // SCI_UPPERCASE / SCI_LOWERCASE are recorded by Scintilla itself.
+}
+static std::wstring properCase(std::wstring text) {
+    bool start = true;
+    for (auto &c : text) {
+        if (IsCharAlphaNumericW(c)) {
+            wchar_t one[2] = {c, 0};
+            if (start)
+                CharUpperBuffW(one, 1);
+            else
+                CharLowerBuffW(one, 1);
+            c = one[0];
+            start = false;
+        } else if (c != L'\'' && c != L'’')
+            start = true; // Apostrophes stay inside a word: "don't" -> "Don't".
+    }
+    return text;
+}
+void App::titleCase() {
+    auto d = current();
+    if (!d || !d->editor || d->monitor)
+        return;
+    auto h = d->editor;
+    int count = static_cast<int>(sci(h, SCI_GETSELECTIONS));
+    std::vector<std::pair<Pos, Pos>> ranges;
+    for (int i = 0; i < count; i++) {
+        Pos a = sci(h, SCI_GETSELECTIONNSTART, i), b = sci(h, SCI_GETSELECTIONNEND, i);
+        if (b > a)
+            ranges.emplace_back(a, b);
+    }
+    if (ranges.empty())
+        return;
+    std::sort(ranges.begin(), ranges.end());
+    Pos total = 0;
+    for (auto &[a, b] : ranges)
+        total += b - a;
+    if (total > 32 * 1024 * 1024)
+        fail(L"32 MiB 이하를 선택해 주세요.");
+    std::vector<Pos> lengths(ranges.size());
+    bool suppression = macroSuppressed;
+    macroSuppressed = true;
+    sci(h, SCI_BEGINUNDOACTION);
+    try {
+        for (size_t i = ranges.size(); i-- > 0;) {
+            auto [a, b] = ranges[i];
+            auto out = narrow(properCase(wide(textRange(h, a, b - a))));
+            lengths[i] = static_cast<Pos>(out.size());
+            if (out != textRange(h, a, b - a))
+                replaceRange(h, a, b, out);
+        }
+    } catch (...) {
+        sci(h, SCI_ENDUNDOACTION);
+        macroSuppressed = suppression;
+        throw;
+    }
+    sci(h, SCI_ENDUNDOACTION);
+    // Restore every selection; earlier replacements shift later ranges by the length change.
+    Pos shift = 0;
+    for (size_t i = 0; i < ranges.size(); i++) {
+        Pos a = ranges[i].first + shift, b = a + lengths[i];
+        if (!i)
+            sci(h, SCI_SETSELECTION, b, a);
+        else
+            sci(h, SCI_ADDSELECTION, b, a);
+        shift += lengths[i] - (ranges[i].second - ranges[i].first);
+    }
+    macroSuppressed = suppression;
+    MacroStep step;
+    step.kind = 9;
+    recordAction(step);
+}
+void App::toggleComment() {
+    auto d = current();
+    if (!d || !d->editor || d->monitor)
+        return;
+    auto h = d->editor;
+    auto tokens = languages.comment(d->language);
+    if (tokens.line.empty() && tokens.start.empty())
+        fail(L"이 문서의 언어에는 주석 기호가 없습니다. 언어 메뉴에서 언어를 지정해 주세요.");
+    Pos a = sci(h, SCI_GETSELECTIONSTART), b = sci(h, SCI_GETSELECTIONEND), caret = sci(h, SCI_GETCURRENTPOS);
+    if (b - a > 32 * 1024 * 1024)
+        fail(L"32 MiB 이하를 선택해 주세요.");
+    Pos first = sci(h, SCI_LINEFROMPOSITION, a), last = sci(h, SCI_LINEFROMPOSITION, b);
+    if (last > first && b == sci(h, SCI_POSITIONFROMLINE, last))
+        last--; // A selection ending at column 0 does not include that line.
+    bool suppression = macroSuppressed;
+    macroSuppressed = true;
+    sci(h, SCI_BEGINUNDOACTION);
+    try {
+        if (!tokens.line.empty()) {
+            auto &token = tokens.line;
+            struct Row {
+                Pos indent, end;
+                bool blank, commented;
+            };
+            std::vector<Row> rows;
+            bool anyText = false, allCommented = true;
+            for (Pos line = first; line <= last; line++) {
+                Row r{sci(h, SCI_GETLINEINDENTPOSITION, line), sci(h, SCI_GETLINEENDPOSITION, line), false, false};
+                r.blank = r.indent == r.end;
+                r.commented = !r.blank && r.end - r.indent >= static_cast<Pos>(token.size()) &&
+                              textRange(h, r.indent, static_cast<Pos>(token.size())) == token;
+                if (!r.blank) {
+                    anyText = true;
+                    allCommented = allCommented && r.commented;
+                }
+                rows.push_back(r);
+            }
+            bool uncomment = anyText && allCommented;
+            Pos caretDelta = 0;
+            for (size_t i = rows.size(); i-- > 0;) {
+                auto &r = rows[i];
+                if (r.blank && anyText)
+                    continue; // Leave empty lines alone inside a commented block.
+                Pos change = 0;
+                if (uncomment) {
+                    Pos length = static_cast<Pos>(token.size());
+                    if (r.indent + length < r.end && sci(h, SCI_GETCHARAT, r.indent + length) == ' ')
+                        length++;
+                    replaceRange(h, r.indent, r.indent + length, "");
+                    change = -length;
+                } else {
+                    replaceRange(h, r.indent, r.indent, token + " ");
+                    change = static_cast<Pos>(token.size()) + 1;
+                }
+                if (first + static_cast<Pos>(i) == sci(h, SCI_LINEFROMPOSITION, caret) && caret >= r.indent)
+                    caretDelta = change;
+            }
+            if (a == b)
+                sci(h, SCI_GOTOPOS, std::max(sci(h, SCI_POSITIONFROMLINE, first), caret + caretDelta));
+            else
+                sci(h, SCI_SETSEL, sci(h, SCI_POSITIONFROMLINE, first), sci(h, SCI_GETLINEENDPOSITION, last));
+        } else {
+            // Block comment: wrap the selection, or the current line's text when nothing is selected.
+            Pos s = a, e = b;
+            if (a == b) {
+                s = sci(h, SCI_GETLINEINDENTPOSITION, first);
+                e = sci(h, SCI_GETLINEENDPOSITION, first);
+            }
+            auto text = textRange(h, s, e - s);
+            const auto &opener = tokens.start, &closer = tokens.end;
+            if (text.size() >= opener.size() + closer.size() && text.starts_with(opener) &&
+                text.ends_with(closer)) {
+                auto inner = text.substr(opener.size(), text.size() - opener.size() - closer.size());
+                if (inner.starts_with(' '))
+                    inner.erase(0, 1);
+                if (inner.ends_with(' '))
+                    inner.pop_back();
+                replaceRange(h, s, e, inner);
+                sci(h, SCI_SETSEL, s, s + static_cast<Pos>(inner.size()));
+            } else {
+                auto wrapped = opener + " " + text + " " + closer;
+                replaceRange(h, s, e, wrapped);
+                sci(h, SCI_SETSEL, s, s + static_cast<Pos>(wrapped.size()));
+            }
+        }
+    } catch (...) {
+        sci(h, SCI_ENDUNDOACTION);
+        macroSuppressed = suppression;
+        throw;
+    }
+    sci(h, SCI_ENDUNDOACTION);
+    macroSuppressed = suppression;
+    MacroStep step;
+    step.kind = 8;
+    recordAction(step);
+}
+static bool isBrace(HWND h, Pos p) {
+    if (p < 0 || p >= sci(h, SCI_GETLENGTH))
+        return false;
+    auto c = static_cast<char>(sci(h, SCI_GETCHARAT, p));
+    return c && std::strchr("()[]{}", c);
+}
+static Pos braceAtCaret(HWND h, Pos caret) {
+    // Like Notepad++: the brace before the caret wins over the one after it.
+    return isBrace(h, caret - 1) ? caret - 1 : isBrace(h, caret) ? caret : -1;
+}
+void App::highlightBrace(Document &d) {
+    auto h = d.editor;
+    if (!h)
+        return;
+    Pos pos = braceMatch && !d.large ? braceAtCaret(h, sci(h, SCI_GETCURRENTPOS)) : -1;
+    if (pos < 0) {
+        sci(h, SCI_BRACEHIGHLIGHT, INVALID_POSITION, INVALID_POSITION);
+        return;
+    }
+    Pos match = sci(h, SCI_BRACEMATCH, pos, 0);
+    if (match < 0)
+        sci(h, SCI_BRACEBADLIGHT, pos);
+    else
+        sci(h, SCI_BRACEHIGHLIGHT, pos, match);
+}
+void App::jumpBrace() {
+    auto d = current();
+    if (!d || !d->editor || d->large)
+        return;
+    auto h = d->editor;
+    Pos caret = sci(h, SCI_GETCURRENTPOS), pos = braceAtCaret(h, caret);
+    if (pos < 0)
+        return;
+    Pos match = sci(h, SCI_BRACEMATCH, pos, 0);
+    if (match < 0)
+        return;
+    // Brace after the caret -> land after its partner; brace before the caret -> land before it.
+    bool suppression = macroSuppressed;
+    macroSuppressed = true;
+    sci(h, SCI_GOTOPOS, pos == caret ? match + 1 : match);
+    macroSuppressed = suppression;
+    MacroStep step;
+    step.kind = 10;
+    recordAction(step);
+}
 void App::fold(int depth, bool expanded) {
     auto d = current();
     if (!d || !d->editor || !sci(d->editor, SCI_GETMARGINWIDTHN, 1) || d->viewMode == 1)
@@ -924,6 +1141,15 @@ void App::runStep(const MacroStep &s) {
         break;
     case 7:
         applyColumn(h, s.number, s.data, s.start, s.increment);
+        break;
+    case 8:
+        toggleComment();
+        break;
+    case 9:
+        titleCase();
+        break;
+    case 10:
+        jumpBrace();
         break;
     }
 }

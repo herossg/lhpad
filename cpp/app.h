@@ -69,12 +69,30 @@ enum Command {
     ComparePrev,
     Help,
     EditorFont,
+    RecentClear,
+    ReopenClosed,
+    CloseOthers,
+    CloseRight,
+    CloseAll,
+    CopyPath,
+    UpperCase,
+    LowerCase,
+    TitleCase,
+    ToggleComment,
+    BraceJump,
+    Settings,
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,
     EncodingConvert = 500,
     LanguageSelect = 700,
-    SavedMacro = 1000
+    SavedMacro = 1000,
+    RecentFile = 2000
+};
+inline constexpr size_t recentLimit = 15, closedLimit = 20;
+struct ClosedTab {
+    fs::path path;
+    bool binary = false;
 };
 struct SearchOptions {
     std::string query, replacement;
@@ -134,7 +152,7 @@ class App {
     HWND window = nullptr, tabs = nullptr, toolbar = nullptr, status = nullptr, findWindow = nullptr,
          compareWindow = nullptr;
     HFONT font = nullptr, mono = nullptr;
-    HMENU menu = nullptr, viewMenu = nullptr, macroMenu = nullptr, languageMenu = nullptr;
+    HMENU menu = nullptr, viewMenu = nullptr, macroMenu = nullptr, languageMenu = nullptr, recentMenu = nullptr;
     HIMAGELIST toolbarImages = nullptr, tabImages = nullptr;
     ULONG_PTR gdiplusToken = 0;
     fs::path profile;
@@ -153,6 +171,11 @@ class App {
     std::string editorFont = "Consolas";
     int editorFontSize = 1100; // Hundredths of a point, as used by Scintilla.
     int editorLineSpacing = 0; // Extra logical pixels between text rows, at 96 DPI.
+    int tabWidth = 4;
+    bool useTabs = false, braceMatch = true;
+    std::vector<fs::path> recentFiles;
+    std::vector<ClosedTab> closedTabs;
+    std::string dragTab; // Id of the document whose tab is being dragged.
     std::vector<MacroStep> recorded, lastMacro;
     std::vector<SavedMacroEntry> savedMacros;
     std::set<std::string> compareIds;
@@ -186,6 +209,20 @@ class App {
     void configureEditor(HWND h);
     void applyEditorFont(HWND h);
     void chooseEditorFont();
+    void applyEditorSettings(HWND h);
+    void settings();
+    void addRecent(const fs::path &path);
+    void rebuildRecentMenu();
+    void openRecent(size_t index);
+    void reopenClosed();
+    void closeTabs(int mode); // 0: others, 1: right of the active tab, 2: all
+    void moveTab(int from, int to);
+    void copyPath();
+    void changeCase(int message);
+    void titleCase();
+    void toggleComment();
+    void highlightBrace(Document &d);
+    void jumpBrace();
     void select(int index);
     void open(const fs::path &path, std::optional<bool> binary = {}, std::optional<Encoding> encoding = {});
     void openPaths(const std::vector<std::string> &paths, bool activate = true);

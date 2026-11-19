@@ -78,7 +78,17 @@ void App::buildMenu() {
     item(f, SaveAs, L"다른 이름으로 저장…\tCtrl+Alt+S");
     item(f, SaveAll, L"모두 저장\tCtrl+Shift+S");
     sep(f);
+    recentMenu = CreatePopupMenu();
+    AppendMenuW(f, MF_POPUP, reinterpret_cast<UINT_PTR>(recentMenu), L"최근 파일(&R)");
+    rebuildRecentMenu();
+    item(f, ReopenClosed, L"닫은 탭 다시 열기\tCtrl+Shift+T");
+    sep(f);
     item(f, Close, L"현재 탭 닫기\tCtrl+W");
+    item(f, CloseOthers, L"다른 탭 모두 닫기");
+    item(f, CloseRight, L"오른쪽 탭 모두 닫기");
+    item(f, CloseAll, L"모든 탭 닫기");
+    item(f, CopyPath, L"파일 경로 복사");
+    sep(f);
     item(f, Exit, L"종료\tAlt+F4");
     auto e = root(L"편집(&E)");
     item(e, Undo, L"실행 취소\tCtrl+Z");
@@ -95,6 +105,13 @@ void App::buildMenu() {
     item(e, LineDown, L"줄 아래로 이동\tCtrl+Shift+↓");
     item(e, SortAsc, L"선택 줄 오름차순 정렬");
     item(e, SortDesc, L"선택 줄 내림차순 정렬");
+    auto caseMenu = CreatePopupMenu();
+    AppendMenuW(e, MF_POPUP, reinterpret_cast<UINT_PTR>(caseMenu), L"대소문자 변환");
+    item(caseMenu, UpperCase, L"대문자로\tCtrl+Shift+U");
+    item(caseMenu, LowerCase, L"소문자로\tCtrl+U");
+    item(caseMenu, TitleCase, L"단어 첫 글자만 대문자로");
+    item(e, ToggleComment, L"주석 넣기 / 빼기\tCtrl+Q");
+    item(e, BraceJump, L"짝 괄호로 이동\tCtrl+B");
     sep(e);
     item(e, AutoIndent, L"자동 들여쓰기");
     auto s = root(L"검색(&S)");
@@ -192,6 +209,7 @@ void App::buildMenu() {
     item(t, RegisterShell, L"탐색기에 ‘LHPad로 열기’ 등록");
     item(t, UnregisterShell, L"탐색기 ‘LHPad로 열기’ 제거");
     item(t, RecoveryFolder, L"복원 파일 폴더 열기");
+    item(t, Settings, L"설정…");
     item(t, About, L"LHPad 정보");
     SetMenu(window, menu);
 }
@@ -653,6 +671,10 @@ void App::command(int id) {
             }
             return;
         }
+        if (id >= RecentFile && id < RecentFile + static_cast<int>(recentLimit)) {
+            openRecent(static_cast<size_t>(id - RecentFile));
+            return;
+        }
         if (id >= SavedMacro && id < SavedMacro + static_cast<int>(savedMacros.size())) {
             play(savedMacros[id - SavedMacro].steps);
             return;
@@ -745,6 +767,43 @@ void App::command(int id) {
             break;
         case EditorFont:
             chooseEditorFont();
+            break;
+        case RecentClear:
+            recentFiles.clear();
+            rebuildRecentMenu();
+            break;
+        case ReopenClosed:
+            reopenClosed();
+            break;
+        case CloseOthers:
+            closeTabs(0);
+            break;
+        case CloseRight:
+            closeTabs(1);
+            break;
+        case CloseAll:
+            closeTabs(2);
+            break;
+        case CopyPath:
+            copyPath();
+            break;
+        case UpperCase:
+            changeCase(SCI_UPPERCASE);
+            break;
+        case LowerCase:
+            changeCase(SCI_LOWERCASE);
+            break;
+        case TitleCase:
+            titleCase();
+            break;
+        case ToggleComment:
+            toggleComment();
+            break;
+        case BraceJump:
+            jumpBrace();
+            break;
+        case Settings:
+            settings();
             break;
         case Find:
             showFind(false);
@@ -915,7 +974,9 @@ void App::command(int id) {
             message(
                 L"Alt+드래그 / Alt+Shift+방향키: 세로 선택\nCtrl+클릭: 다중 커서\nAlt+C: 열 편집\nCtrl+F / "
                 L"Ctrl+H: 찾기 / 바꾸기\nCtrl+Shift+R: 매크로 녹화\nCtrl+Shift+P: 매크로 실행\nCtrl+Alt+C: "
-                L"두 탭 비교\nCtrl+Alt+B: 현재 구간 접기\nCtrl+Shift+V: 미리보기\nCtrl+Alt+V: 분할 보기",
+                L"두 탭 비교\nCtrl+Alt+B: 현재 구간 접기\nCtrl+Shift+V: 미리보기\nCtrl+Alt+V: 분할 보기\n"
+                L"Ctrl+Q: 주석 넣기 / 빼기\nCtrl+B: 짝 괄호로 이동\nCtrl+Shift+U / Ctrl+U: 대문자 / 소문자\n"
+                L"Ctrl+Shift+T: 닫은 탭 다시 열기",
                 L"편집 단축키");
             break;
         }
@@ -990,6 +1051,12 @@ bool App::shortcut(MSG &m) {
         case 'L':
             id = AddAll;
             break;
+        case 'T':
+            id = ReopenClosed;
+            break;
+        case 'U':
+            id = UpperCase;
+            break;
         case VK_UP:
             id = LineUp;
             break;
@@ -1025,6 +1092,15 @@ bool App::shortcut(MSG &m) {
             break;
         case 'L':
             id = DeleteLine;
+            break;
+        case 'U':
+            id = LowerCase;
+            break;
+        case 'Q':
+            id = ToggleComment;
+            break;
+        case 'B':
+            id = BraceJump;
             break;
         case VK_ADD:
         case VK_OEM_PLUS:
@@ -1094,11 +1170,20 @@ LRESULT CALLBACK App::childProc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id,
                 a->update();
                 return 0;
             }
+            if (m == WM_LBUTTONDOWN)
+                a->dragTab = a->docs[i]->id; // The tab control selects it; moving reorders.
             if (m == WM_RBUTTONDOWN) {
                 a->select(i);
                 auto menu = CreatePopupMenu();
                 AppendMenuW(menu, MF_STRING, Save, L"저장");
                 AppendMenuW(menu, MF_STRING, Close, L"닫기");
+                AppendMenuW(menu, MF_STRING, CloseOthers, L"다른 탭 모두 닫기");
+                AppendMenuW(menu, MF_STRING, CloseRight, L"오른쪽 탭 모두 닫기");
+                AppendMenuW(menu, MF_STRING, CloseAll, L"모든 탭 닫기");
+                AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+                AppendMenuW(menu, MF_STRING | (a->docs[i]->path.empty() ? MF_GRAYED : 0), CopyPath,
+                            L"파일 경로 복사");
+                AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
                 AppendMenuW(menu, MF_STRING, CompareSelect, L"비교 대상으로 선택");
                 AppendMenuW(menu, MF_STRING, Compare, L"선택한 두 탭 비교");
                 POINT p{GET_X_LPARAM(l), GET_Y_LPARAM(l)};
@@ -1112,6 +1197,19 @@ LRESULT CALLBACK App::childProc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id,
             }
         }
     }
+    if (h == a->tabs && m == WM_MOUSEMOVE && (w & MK_LBUTTON) && !a->dragTab.empty() &&
+        a->pressedTabClose.empty() && !a->busy && !a->playing) {
+        TCHITTESTINFO hit{{GET_X_LPARAM(l), GET_Y_LPARAM(l)}, 0};
+        int target = TabCtrl_HitTest(h, &hit);
+        int from = -1;
+        for (size_t i = 0; i < a->docs.size(); i++)
+            if (a->docs[i]->id == a->dragTab)
+                from = static_cast<int>(i);
+        if (target >= 0 && from >= 0 && target != from)
+            a->moveTab(from, target);
+    }
+    if (h == a->tabs && (m == WM_LBUTTONUP || m == WM_CAPTURECHANGED))
+        a->dragTab.clear();
     if (m == WM_NCDESTROY)
         RemoveWindowSubclass(h, childProc, id);
     return DefSubclassProc(h, m, w, l);
@@ -1184,6 +1282,8 @@ LRESULT App::notify(NMHDR *n) {
         break;
     case SCN_UPDATEUI:
         if (!d->loading) {
+            if (s.updated & (SC_UPDATE_CONTENT | SC_UPDATE_SELECTION))
+                highlightBrace(*d);
             update();
             if (s.updated & SC_UPDATE_V_SCROLL)
                 syncCompare(*d);

@@ -1,4 +1,4 @@
-LHPad 1.1.2 — C++ native, Windows x64
+LHPad 1.2.0 — C++ native, Windows x64
 
 Explorer menu presentation now checks only selection count, without deferred state,
 item attributes or path lookup. File validation runs when the command is invoked.
