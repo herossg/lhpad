@@ -18,7 +18,17 @@ const project = resolve(import.meta.dirname, '..');
 
 const portal = resolve(project, '../../AndroidServer/htools-portal');
 
-const version = '1.1.2';
+const header = await readFile(resolve(project, 'cpp', 'version.h'), 'utf8');
+
+const version = ['MAJOR', 'MINOR', 'PATCH'].map(part => {
+
+  const match = header.match(new RegExp(`^#define LHPAD_VERSION_${part}\\s+(\\d+)`, 'm'));
+
+  if (!match) throw new Error(`cpp/version.h is missing LHPAD_VERSION_${part}.`);
+
+  return match[1];
+
+}).join('.');
 
 const name = `LHPad-${version}-windows-x64.zip`;
 
@@ -38,7 +48,7 @@ const site = 'https://htools.duckdns.org/';
 
 const names = ['index.html', 'downloads/releases.json', 'downloads/SHA256SUMS.txt'];
 
-const signatures = JSON.parse(await readFile(resolve(project, 'artifacts', 'native-1.1.2', 'docs/signature-verification.json'), 'utf8').then(text => text.replace(/^\uFEFF/, '')));
+const signatures = JSON.parse(await readFile(resolve(project, 'artifacts', `native-${version}`, 'docs/signature-verification.json'), 'utf8').then(text => text.replace(/^\uFEFF/, '')));
 
 if (signatures.length !== 5 || signatures.some(s => s.status !== 'Valid' || s.thumbprint !== '537D10B46D7742E859498D5642863AEC947973CB'))
 

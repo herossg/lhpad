@@ -330,6 +330,10 @@ Hex 탭의 찾기 창은 기본적으로 `텍스트 UTF-8`입니다. `program` �
 
 
 
+버전 번호는 `cpp/version.h`의 `LHPAD_VERSION_MAJOR/MINOR/PATCH` 한 곳에서만 바꿉니다. 실행 파일 리소스, 정보 창, MSIX 패키지 버전, 탐색기 메뉴 패키지 검사, CMake, 배포 스크립트의 기본 폴더·ZIP 이름이 이 값을 따릅니다. 릴리스 노트 `docs/RELEASE-x.y.z.md`는 직접 작성합니다.
+
+
+
 현재 기본 빌드는 **Visual Studio C++ 데스크톱 도구 + Windows SDK**만 사용하며 .NET SDK나 NuGet 복원이 필요하지 않습니다. `cpp/`에 C++20 소스, JSON·XML·Markdown 라이브러리 소스와 WebView2 네이티브 SDK를 포함했습니다. C/C++ 런타임은 `/MT`로 정적 연결합니다. `vendor/notepad-plus-plus-src.zip`에 Scintilla/Lexilla/Boost의 기준 소스를 포함했으며 `cpp/patch-scintilla.ps1`이 파일 드롭 처리를 추가합니다. 네이티브 엔진을 다시 빌드하지 않으면 `native/`의 사전 빌드된 DLL을 사용합니다. 파스텔 도구 모음 PNG는 기존 벡터 아이콘을 미리 내보낸 자산이므로 빌드에 .NET이 필요하지 않습니다. 보존된 C# 버전의 `-CSharp` 빌드에만 .NET 10 SDK와 기존 NuGet 패키지가 필요합니다.
 
 

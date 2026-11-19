@@ -1,6 +1,8 @@
 ﻿param([Parameter(Mandatory=$true)][string]$Directory)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'version.ps1')
+$taskVersion=Get-LHPadVersion
 $taskDirectory=(Resolve-Path -LiteralPath $Directory).ProviderPath
 $taskBinaries=@('LHPad.exe','LHPadShell.dll','Scintilla.dll','Lexilla.dll','WebView2Loader.dll','LHPad.Explorer.msix')
 foreach($taskName in $taskBinaries){
@@ -16,14 +18,14 @@ Copy-Item -LiteralPath (Join-Path $taskRoot 'cpp/README.txt') -Destination $task
 foreach($taskName in @('install-explorer.ps1','register-explorer.ps1')){
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $taskName) -Destination (Join-Path $taskDirectory 'tools') -Force
 }
-Copy-Item -LiteralPath (Join-Path $taskRoot 'docs/RELEASE-1.1.2.md') -Destination (Join-Path $taskDirectory 'docs') -Force
+Copy-Item -LiteralPath (Join-Path $taskRoot "docs/RELEASE-$taskVersion.md") -Destination (Join-Path $taskDirectory 'docs') -Force
 $taskNames=$taskBinaries+@('LHPad.Development.cer','README.md','README.txt','LICENSE','THIRD-PARTY-NOTICES.txt','Register-LHPad.cmd','data','Assets','tools','docs')
 $taskFiles=@($taskNames | ForEach-Object { Join-Path $taskDirectory $_ })
-$taskZip=Join-Path $taskRoot 'artifacts/LHPad-1.1.2-windows-x64.zip'
+$taskZip=Join-Path $taskRoot "artifacts/LHPad-$taskVersion-windows-x64.zip"
 Compress-Archive -LiteralPath $taskFiles -DestinationPath $taskZip -Force
 foreach($taskAlias in @('LHPad-native-windows-x64.zip','LHPad-windows-x64.zip')){
     Copy-Item -LiteralPath $taskZip -Destination (Join-Path $taskRoot "artifacts/$taskAlias") -Force
 }
 $taskDigest=(Get-FileHash -LiteralPath $taskZip -Algorithm SHA256).Hash.ToLowerInvariant()
-"$taskDigest  LHPad-1.1.2-windows-x64.zip" | Set-Content -LiteralPath (Join-Path $taskRoot 'artifacts/LHPad-1.1.2-SHA256SUMS.txt') -Encoding ascii
+"$taskDigest  LHPad-$taskVersion-windows-x64.zip" | Set-Content -LiteralPath (Join-Path $taskRoot "artifacts/LHPad-$taskVersion-SHA256SUMS.txt") -Encoding ascii
 Write-Output "Release ZIP: $taskZip"

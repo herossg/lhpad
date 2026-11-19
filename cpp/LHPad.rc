@@ -1,9 +1,10 @@
 #include <windows.h>
+#include "version.h"
 1 ICON "../data/LHPad.ico"
 1 RT_MANIFEST "app.manifest"
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,2,0
- PRODUCTVERSION 1,1,2,0
+ FILEVERSION LHPAD_VERSION_MAJOR,LHPAD_VERSION_MINOR,LHPAD_VERSION_PATCH,0
+ PRODUCTVERSION LHPAD_VERSION_MAJOR,LHPAD_VERSION_MINOR,LHPAD_VERSION_PATCH,0
  FILEFLAGSMASK 0x3fL
  FILEOS VOS_NT_WINDOWS32
  FILETYPE VFT_APP
@@ -14,12 +15,12 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "LHPad contributors\0"
    VALUE "FileDescription", "LHPad native text and Hex editor\0"
-   VALUE "FileVersion", "1.1.2\0"
+   VALUE "FileVersion", LHPAD_VERSION_STRING "\0"
    VALUE "InternalName", "LHPad\0"
    VALUE "LegalCopyright", "GPL-3.0-or-later\0"
    VALUE "OriginalFilename", "LHPad.exe\0"
    VALUE "ProductName", "LHPad\0"
-   VALUE "ProductVersion", "1.1.2 C++\0"
+   VALUE "ProductVersion", LHPAD_VERSION_STRING " C++\0"
   END
  END
  BLOCK "VarFileInfo"

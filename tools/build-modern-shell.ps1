@@ -3,7 +3,12 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskStage = Join-Path $taskRoot 'artifacts\modern-shell-package'
 New-Item -ItemType Directory -Force $taskStage,(Join-Path $taskStage 'Assets'),$Destination | Out-Null
-Copy-Item -LiteralPath (Join-Path $taskRoot 'cpp\modern\AppxManifest.xml') -Destination $taskStage -Force
+. (Join-Path $PSScriptRoot 'version.ps1')
+# The package version comes from cpp/version.h; shell_package.cpp checks the installed package against the same value.
+$taskManifest = Get-Content -Raw -LiteralPath (Join-Path $taskRoot 'cpp\modern\AppxManifest.xml')
+$taskVersioned = $taskManifest -replace '(<Identity\b[^>]*\bVersion=")\d+\.\d+\.\d+\.\d+(")', "`${1}$(Get-LHPadVersion).0`${2}"
+if ($taskManifest -notmatch '<Identity\b[^>]*\bVersion="\d+\.\d+\.\d+\.\d+"') { throw 'AppxManifest.xml has no Identity Version to update.' }
+[IO.File]::WriteAllText((Join-Path $taskStage 'AppxManifest.xml'), $taskVersioned, (New-Object Text.UTF8Encoding $false))
 # Reuse the program's embedded 256px PNG; no graphics framework or runtime added.
 $taskIcon = [IO.File]::ReadAllBytes((Join-Path $taskRoot 'data\LHPad.ico'))
 $taskFound = $false

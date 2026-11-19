@@ -15,7 +15,8 @@ if ([string]::IsNullOrWhiteSpace($Executable)) {
     if (Test-Path -LiteralPath $taskPortable -PathType Leaf) {
         $Executable = $taskPortable
     } else {
-        $Executable = Join-Path $taskRoot 'artifacts\native-1.1.2\LHPad.exe'
+        . (Join-Path $PSScriptRoot 'version.ps1')
+        $Executable = Join-Path $taskRoot "artifacts\native-$(Get-LHPadVersion)\LHPad.exe"
     }
 }
 $taskResolved = (Resolve-Path -LiteralPath $Executable).ProviderPath

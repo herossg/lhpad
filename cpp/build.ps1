@@ -1,8 +1,12 @@
-﻿param([switch]$Test,[switch]$ShellTest,[switch]$RebuildNative,[string]$OutputDirectory='artifacts/native-1.1.2')
+﻿param([switch]$Test,[switch]$ShellTest,[switch]$RebuildNative,[string]$OutputDirectory='')
 
 $ErrorActionPreference='Stop'
 
 $taskRoot=Split-Path $PSScriptRoot -Parent
+
+. (Join-Path $taskRoot 'tools/version.ps1')
+
+if(!$OutputDirectory){$OutputDirectory="artifacts/native-$(Get-LHPadVersion)"}
 
 $taskOutput=if([IO.Path]::IsPathRooted($OutputDirectory)){$OutputDirectory}else{Join-Path $taskRoot $OutputDirectory}
 

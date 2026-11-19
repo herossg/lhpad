@@ -1,4 +1,5 @@
 #include "app.h"
+#include "version.h"
 #include <dlgs.h>
 namespace lp {
 namespace {
@@ -356,7 +357,7 @@ static LRESULT CALLBACK aboutProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         auto icon = control(L"STATIC", L"", SS_ICON | SS_CENTERIMAGE, 10, 176, 20, 128, 128);
         SendMessageW(icon, STM_SETIMAGE, IMAGE_ICON, reinterpret_cast<LPARAM>(state->icon));
         auto heading =
-            control(L"STATIC", L"LHPad 1.1.2 · C++ 네이티브 x64", SS_CENTER, 11, 20, 168, 440, 32);
+            control(L"STATIC", L"LHPad " LHPAD_VERSION_STRING " · C++ 네이티브 x64", SS_CENTER, 11, 20, 168, 440, 32);
         LOGFONTW font{};
         GetObjectW(state->app->font, sizeof(font), &font);
         font.lfHeight = -scale(17);

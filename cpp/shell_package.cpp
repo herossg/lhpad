@@ -1,5 +1,6 @@
 #include "core.h"
 #include "shell_mode.hpp"
+#include "version.h"
 #include <exception>
 #include <fstream>
 #include <shlwapi.h>
@@ -18,14 +19,17 @@ winrt::Windows::Foundation::Uri fileUri(const std::filesystem::path &path) {
   winrt::check_hresult(UrlCreateFromPathW(path.c_str(), url, &size, 0));
   return winrt::Windows::Foundation::Uri(url);
 }
+bool isThisVersion(const winrt::Windows::ApplicationModel::PackageVersion &version) {
+  return version.Major == LHPAD_VERSION_MAJOR && version.Minor == LHPAD_VERSION_MINOR &&
+         version.Build == LHPAD_VERSION_PATCH && version.Revision == 0;
+}
 bool currentPackage(const winrt::Windows::ApplicationModel::Package &package) {
   try {
   const auto version = package.Id().Version();
   const auto location = std::filesystem::path(package.EffectiveExternalLocation().Path().c_str()).lexically_normal();
   const auto expected = exeDir().lexically_normal();
   std::error_code fileError;
-  return version.Major == 1 && version.Minor == 1 && version.Build == 2 &&
-         version.Revision == 0 && package.Status().VerifyIsOK() &&
+  return isThisVersion(version) && package.Status().VerifyIsOK() &&
          std::filesystem::is_regular_file(expected / L"LHPad.exe", fileError) &&
          std::filesystem::is_regular_file(expected / L"LHPadShell.dll", fileError) &&
          CompareStringOrdinal(location.c_str(), -1, expected.c_str(), -1, TRUE) == CSTR_EQUAL;
@@ -67,9 +71,7 @@ void deploy(bool enable) {
   // present, and same-version packages whose location/status needs repair.
   std::exception_ptr removalFailure;
   for (const auto &package : installed) {
-    const auto version = package.Id().Version();
-    const bool sameVersion = version.Major == 1 && version.Minor == 1 &&
-                             version.Build == 2 && version.Revision == 0;
+    const bool sameVersion = isThisVersion(package.Id().Version());
     if (!enable || (current && !currentPackage(package)) ||
         (!current && sameVersion)) {
       try {
