@@ -859,6 +859,39 @@ int runTests(App &a, bool full) {
             check(contrastRatio(adaptForeground(RGB(0, 0, 255)), palette().editorBack) >= 4.5 &&
                       contrastRatio(adaptForeground(RGB(255, 0, 0)), palette().editorBack) >= 4.5,
                   "Adapted pure blue and red text keep at least 4.5:1 contrast");
+            // The dark message box answers like MessageBox: buttons give their id, Escape gives the default.
+            static int messageAnswer = 0;
+            static bool messageFound = false, messageDark = false;
+            auto answerWith = [](int answer) {
+                messageAnswer = answer;
+                messageFound = messageDark = false;
+                SetTimer(nullptr, 0, 60, [](HWND, UINT, UINT_PTR id, DWORD) {
+                    if (auto box = FindWindowW(L"LHPad.Message", nullptr)) {
+                        KillTimer(nullptr, id);
+                        messageFound = true;
+                        // Erase into a memory bitmap: independent of other windows covering the screen.
+                        HDC screen = GetDC(nullptr), memory = CreateCompatibleDC(screen);
+                        HBITMAP bitmap = CreateCompatibleBitmap(screen, 8, 8);
+                        auto previous = SelectObject(memory, bitmap);
+                        SendMessageW(box, WM_ERASEBKGND, reinterpret_cast<WPARAM>(memory), 0);
+                        messageDark = GetPixel(memory, 4, 4) == palette().window;
+                        SelectObject(memory, previous);
+                        DeleteObject(bitmap);
+                        DeleteDC(memory);
+                        ReleaseDC(nullptr, screen);
+                        PostMessageW(box, WM_COMMAND, messageAnswer, 0);
+                    }
+                });
+            };
+            answerWith(IDYES);
+            int yes = a.ask(L"다크 메시지 테스트", L"LHPad", MB_YESNOCANCEL | MB_ICONQUESTION);
+            check(messageFound && yes == IDYES, "Dark message box returns the clicked button");
+            check(messageDark, "Dark message box paints a dark background");
+            answerWith(IDCANCEL);
+            check(a.ask(L"Esc", L"LHPad", MB_YESNO | MB_ICONWARNING) == IDNO && messageFound,
+                  "Escape in a dark yes/no message box answers No like the system dialog");
+            answerWith(IDCANCEL);
+            check(a.ask(L"Esc", L"LHPad", MB_OK) == IDOK && messageFound, "Escape in a dark OK message box answers OK");
             a.darkMode = false;
             a.applyDarkMode();
             check(!palette().dark && sci(h, SCI_STYLEGETBACK, STYLE_DEFAULT) == static_cast<LRESULT>(RGB(253, 253, 252)) &&

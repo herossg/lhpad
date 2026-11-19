@@ -36,6 +36,8 @@ static LRESULT CALLBACK compareProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     }
     if (!state)
         return DefWindowProcW(h, m, w, l);
+    if (LRESULT coloured = 0; dialogColours(m, w, l, coloured))
+        return coloured;
     switch (m) {
     case WM_SIZE: {
         RECT r{};
@@ -170,6 +172,7 @@ void App::compare() {
     }
     auto info = L"변경 " + std::to_wstring(state->changes.size()) + L"줄 · 읽기 전용 스냅샷";
     SetWindowTextW(GetDlgItem(h, 512), info.c_str());
+    themeDialog(h);
     ShowWindow(h, SW_SHOWNORMAL);
     SendMessageW(h, WM_SIZE, 0, 0);
     state->navigate(false);

@@ -380,4 +380,13 @@ std::optional<std::vector<Field>> inputDialog(HWND owner, const std::wstring &ti
                                               std::vector<Field> fields,
                                               const std::wstring &explanation = L"");
 int runTests(App &app, bool full = true);
+// Dark mode for secondary windows (find, input, about, compare, messages). themeDialog applies the
+// current palette to a window's title bar and child controls; dialogColours answers WM_ERASEBKGND and
+// WM_CTLCOLOR* in dark mode (returns false in light mode so the original handling runs).
+void themeDialog(HWND dialog);
+bool dialogColours(UINT message, WPARAM w, LPARAM l, LRESULT &result);
+HBRUSH paletteBrush(COLORREF colour);
+// Message box drawn with LHPad's own controls so it can follow dark mode. Same flags and results as
+// MessageBox for MB_OK / MB_YESNO / MB_YESNOCANCEL.
+int messageDialog(HWND owner, const std::wstring &text, const std::wstring &title, UINT flags, HFONT font);
 } // namespace lp

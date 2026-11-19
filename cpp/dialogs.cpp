@@ -144,6 +144,8 @@ static LRESULT CALLBACK inputProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     }
     if (!s)
         return DefWindowProcW(h, m, w, l);
+    if (LRESULT coloured = 0; dialogColours(m, w, l, coloured))
+        return coloured;
     switch (m) {
     case WM_CTLCOLORSTATIC:
         SetBkMode(reinterpret_cast<HDC>(w), TRANSPARENT);
@@ -261,6 +263,7 @@ std::optional<std::vector<Field>> inputDialog(HWND owner, const std::wstring &ti
                              owner, nullptr, GetModuleHandleW(nullptr), &state);
     if (!h)
         fail(errorText());
+    themeDialog(h);
     EnableWindow(owner, FALSE);
     ShowWindow(h, SW_SHOW);
     if (!state.controls.empty()) {
@@ -292,7 +295,149 @@ std::optional<std::vector<Field>> inputDialog(HWND owner, const std::wstring &ti
 void App::message(const std::wstring &text, const std::wstring &title, UINT flags) {
     ask(text, title, flags);
 }
+struct MessageState {
+    std::wstring text;
+    UINT flags = 0;
+    HFONT font = nullptr;
+    int result = IDCANCEL;
+    bool done = false;
+};
+static LRESULT CALLBACK messageProc(HWND h, UINT m, WPARAM w, LPARAM l) {
+    auto *s = reinterpret_cast<MessageState *>(GetWindowLongPtrW(h, GWLP_USERDATA));
+    if (m == WM_NCCREATE) {
+        s = static_cast<MessageState *>(reinterpret_cast<CREATESTRUCTW *>(l)->lpCreateParams);
+        SetWindowLongPtrW(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(s));
+    }
+    if (!s)
+        return DefWindowProcW(h, m, w, l);
+    if (LRESULT coloured = 0; dialogColours(m, w, l, coloured))
+        return coloured;
+    switch (m) {
+    case WM_CREATE: {
+        int dpi = GetDpiForWindow(h);
+        auto scale = [&](int x) { return MulDiv(x, dpi, 96); };
+        // Measure the text at a fixed width; long text scrolls inside a read-only box.
+        auto dc = GetDC(h);
+        auto old = SelectObject(dc, s->font);
+        RECT measure{0, 0, scale(440), 0};
+        DrawTextW(dc, s->text.c_str(), -1, &measure, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX | DT_EXPANDTABS);
+        SelectObject(dc, old);
+        ReleaseDC(h, dc);
+        int textHeight = std::clamp<int>(measure.bottom + scale(8), scale(40), scale(360));
+        UINT type = s->flags & MB_TYPEMASK;
+        auto icon = (s->flags & MB_ICONMASK) == MB_ICONERROR                                         ? IDI_ERROR
+                    : (s->flags & MB_ICONMASK) == MB_ICONWARNING || (s->flags & MB_ICONMASK) == MB_ICONQUESTION ? IDI_WARNING
+                                                                                                    : IDI_INFORMATION;
+        auto image = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_ICON, scale(20), scale(20),
+                                     scale(32), scale(32), h, nullptr, nullptr, nullptr);
+        SendMessageW(image, STM_SETICON, reinterpret_cast<WPARAM>(LoadIconW(nullptr, icon)), 0);
+        auto body = CreateWindowExW(0, L"EDIT", s->text.c_str(),
+                                    WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_READONLY |
+                                        (measure.bottom + scale(8) > scale(360) ? WS_VSCROLL : 0),
+                                    scale(68), scale(20), scale(452), textHeight, h, nullptr, nullptr, nullptr);
+        SendMessageW(body, WM_SETFONT, reinterpret_cast<WPARAM>(s->font), TRUE);
+        std::vector<std::pair<int, const wchar_t *>> buttons;
+        int fallback = IDOK;
+        if (type == MB_YESNOCANCEL) {
+            buttons = {{IDYES, L"예"}, {IDNO, L"아니요"}, {IDCANCEL, L"취소"}};
+            fallback = IDCANCEL;
+        } else if (type == MB_YESNO) {
+            buttons = {{IDYES, L"예"}, {IDNO, L"아니요"}};
+            fallback = IDNO;
+        } else
+            buttons = {{IDOK, L"확인"}};
+        s->result = fallback; // Escape / close keep the same answer as the system dialog's default.
+        int y = scale(20) + std::max(textHeight, scale(32)) + scale(18), x = scale(540) - scale(20);
+        for (auto it = buttons.rbegin(); it != buttons.rend(); ++it) {
+            x -= scale(96);
+            auto button = CreateWindowExW(0, L"BUTTON", it->second,
+                                          WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                                              (it->first == fallback ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
+                                          x, y, scale(88), scale(32), h,
+                                          reinterpret_cast<HMENU>(static_cast<INT_PTR>(it->first)), nullptr, nullptr);
+            SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(s->font), TRUE);
+            x -= scale(8); // Gap between buttons.
+        }
+        RECT r{0, 0, scale(540), y + scale(52)};
+        AdjustWindowRectExForDpi(&r, static_cast<DWORD>(GetWindowLongPtrW(h, GWL_STYLE)), FALSE,
+                                 WS_EX_DLGMODALFRAME, dpi);
+        RECT owner{};
+        GetWindowRect(GetWindow(h, GW_OWNER) ? GetWindow(h, GW_OWNER) : GetDesktopWindow(), &owner);
+        int width = r.right - r.left, height = r.bottom - r.top;
+        SetWindowPos(h, nullptr, (owner.left + owner.right - width) / 2, (owner.top + owner.bottom - height) / 2,
+                     width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+        return 0;
+    }
+    case WM_COMMAND:
+        if (LOWORD(w) == IDYES || LOWORD(w) == IDNO || LOWORD(w) == IDOK || LOWORD(w) == IDCANCEL) {
+            UINT type = s->flags & MB_TYPEMASK;
+            // Escape arrives as IDCANCEL; dialogs without a Cancel button answer with their default.
+            s->result = LOWORD(w) == IDCANCEL && type != MB_YESNOCANCEL && type != MB_OK ? s->result : LOWORD(w);
+            if (LOWORD(w) == IDCANCEL && type == MB_OK)
+                s->result = IDOK;
+            s->done = true;
+            ShowWindow(h, SW_HIDE);
+            return 0;
+        }
+        break;
+    case WM_CLOSE:
+        s->done = true;
+        ShowWindow(h, SW_HIDE);
+        return 0;
+    }
+    return DefWindowProcW(h, m, w, l);
+}
+int messageDialog(HWND owner, const std::wstring &text, const std::wstring &title, UINT flags, HFONT font) {
+    static bool registered = [] {
+        WNDCLASSEXW c{sizeof(c)};
+        c.lpfnWndProc = messageProc;
+        c.hInstance = GetModuleHandleW(nullptr);
+        c.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+        c.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+        c.lpszClassName = L"LHPad.Message";
+        RegisterClassExW(&c);
+        return true;
+    }();
+    (void)registered;
+    MessageState state{text, flags, font};
+    auto h = CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_CONTROLPARENT, L"LHPad.Message", title.c_str(),
+                             WS_POPUP | WS_CAPTION | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT, 560, 240, owner,
+                             nullptr, GetModuleHandleW(nullptr), &state);
+    if (!h)
+        return MessageBoxW(owner, text.c_str(), title.c_str(), flags);
+    themeDialog(h);
+    bool ownerEnabled = owner && IsWindowEnabled(owner);
+    if (ownerEnabled)
+        EnableWindow(owner, FALSE);
+    ShowWindow(h, SW_SHOW);
+    for (int id : {IDCANCEL, IDNO, IDOK})
+        if (auto button = GetDlgItem(h, id); button && (GetWindowLongPtrW(button, GWL_STYLE) & BS_DEFPUSHBUTTON)) {
+            SetFocus(button);
+            break;
+        }
+    MSG msg;
+    while (!state.done) {
+        auto result = GetMessageW(&msg, nullptr, 0, 0);
+        if (result <= 0) {
+            if (result == 0)
+                PostQuitMessage(static_cast<int>(msg.wParam));
+            break;
+        }
+        if (!IsDialogMessageW(h, &msg)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    DestroyWindow(h);
+    if (ownerEnabled) {
+        EnableWindow(owner, TRUE);
+        SetActiveWindow(owner);
+    }
+    return state.result;
+}
 int App::ask(const std::wstring &text, const std::wstring &title, UINT flags) {
+    if (palette().dark)
+        return messageDialog(window, text, title, flags, font);
     TASKDIALOGCONFIG c{sizeof(c)};
     c.hwndParent = window;
     c.hInstance = instance;
@@ -336,6 +481,8 @@ static LRESULT CALLBACK aboutProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     }
     if (!state)
         return DefWindowProcW(h, m, w, l);
+    if (LRESULT coloured = 0; dialogColours(m, w, l, coloured))
+        return coloured;
     if (m == WM_CTLCOLORSTATIC) {
         SetBkMode(reinterpret_cast<HDC>(w), TRANSPARENT);
         SetTextColor(reinterpret_cast<HDC>(w), RGB(43, 52, 63));
@@ -407,6 +554,7 @@ void App::about() {
                              window, nullptr, instance, &state);
     if (!h)
         fail(errorText());
+    themeDialog(h);
     EnableWindow(window, FALSE);
     ShowWindow(h, SW_SHOW);
     SetFocus(GetDlgItem(h, IDOK));

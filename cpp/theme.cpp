@@ -96,6 +96,73 @@ struct UAHDRAWMENUITEM {
     UAHMENUITEM umi;
 };
 } // namespace
+HBRUSH paletteBrush(COLORREF colour) {
+    static std::map<COLORREF, HBRUSH> brushes; // A handful of palette colours; kept for the process.
+    auto &brush = brushes[colour];
+    if (!brush)
+        brush = CreateSolidBrush(colour);
+    return brush;
+}
+void themeDialog(HWND dialog) {
+    if (!dialog || !IsWindow(dialog))
+        return;
+    bool dark = palette().dark;
+    darkTitleBar(dialog, dark);
+    EnumChildWindows(
+        dialog,
+        [](HWND child, LPARAM value) -> BOOL {
+            bool darkChild = value != 0;
+            wchar_t cls[64]{};
+            GetClassNameW(child, cls, 64);
+            auto style = GetWindowLongPtrW(child, GWL_STYLE) & BS_TYPEMASK;
+            if (!_wcsicmp(cls, L"Button")) {
+                bool box = style == BS_CHECKBOX || style == BS_AUTOCHECKBOX || style == BS_RADIOBUTTON ||
+                           style == BS_AUTORADIOBUTTON || style == BS_3STATE || style == BS_AUTO3STATE ||
+                           style == BS_GROUPBOX;
+                // Themed check boxes ignore WM_CTLCOLOR text colours; the classic look honours them.
+                if (box)
+                    SetWindowTheme(child, darkChild ? L"" : nullptr, darkChild ? L"" : nullptr);
+                else
+                    SetWindowTheme(child, darkChild ? L"DarkMode_Explorer" : nullptr, nullptr);
+            } else if (!_wcsicmp(cls, L"Edit") || !_wcsicmp(cls, L"ComboBox"))
+                SetWindowTheme(child, darkChild ? L"DarkMode_CFD" : nullptr, nullptr);
+            else if (!_wcsicmp(cls, WC_LISTVIEWW))
+                themeList(child);
+            return TRUE;
+        },
+        dark);
+    RedrawWindow(dialog, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
+}
+bool dialogColours(UINT message, WPARAM w, LPARAM l, LRESULT &result) {
+    auto &p = palette();
+    if (!p.dark)
+        return false;
+    auto dc = reinterpret_cast<HDC>(w);
+    switch (message) {
+    case WM_ERASEBKGND: {
+        RECT r{};
+        GetClipBox(dc, &r); // Works for window and memory DCs alike.
+        FillRect(dc, &r, paletteBrush(p.window));
+        result = 1;
+        return true;
+    }
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+        SetTextColor(dc, p.text);
+        SetBkColor(dc, p.window);
+        result = reinterpret_cast<LRESULT>(paletteBrush(p.window));
+        return true;
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+        SetTextColor(dc, p.text);
+        SetBkColor(dc, p.editorBack);
+        result = reinterpret_cast<LRESULT>(paletteBrush(p.editorBack));
+        return true;
+    }
+    (void)l;
+    return false;
+}
 bool App::darkMenuMessage(UINT message, WPARAM w, LPARAM l, LRESULT &result) {
     if (!palette().dark)
         return false;
@@ -224,6 +291,8 @@ void App::applyDarkMode() {
         if (doc->hexWindow)
             InvalidateRect(doc->hexWindow, nullptr, TRUE);
     }
+    themeDialog(findWindow);
+    themeDialog(compareWindow);
     if (compareWindow)
         for (int id : {501, 502})
             if (auto editor = GetDlgItem(compareWindow, id)) {

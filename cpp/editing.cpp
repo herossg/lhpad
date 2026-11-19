@@ -142,6 +142,8 @@ LRESULT CALLBACK App::findProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     }
     if (!a)
         return DefWindowProcW(h, m, w, l);
+    if (LRESULT coloured = 0; dialogColours(m, w, l, coloured))
+        return coloured;
     switch (m) {
     case WM_CREATE: {
         int dpi = GetDpiForWindow(h);
@@ -220,6 +222,7 @@ void App::showFind(bool replace) {
         findWindow = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT, L"LHPad.Find",
                                      L"찾기 / 바꾸기", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU, r.left + 50,
                                      r.top + 100, width, height, window, nullptr, instance, this);
+        themeDialog(findWindow);
     }
     auto d = current();
     if (d && d->editor) {
