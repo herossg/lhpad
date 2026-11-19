@@ -836,6 +836,8 @@ int runTests(App &a, bool full) {
             setText(*text, "int main() { return 0; }");
             sci(h, SCI_COLOURISE, 0, -1);
             auto keywordLight = static_cast<COLORREF>(sci(h, SCI_STYLEGETFORE, cppKeyword));
+            const Pos returnAt = 13; // "return" is in the cpp instre1 list ("int" is type1, a different style).
+            auto styleBefore = sci(h, SCI_GETSTYLEAT, returnAt);
             a.darkMode = true;
             a.applyDarkMode();
             auto keywordDark = static_cast<COLORREF>(sci(h, SCI_STYLEGETFORE, cppKeyword));
@@ -846,8 +848,8 @@ int runTests(App &a, bool full) {
             check(contrastRatio(keywordDark, palette().editorBack) >= 4.5 &&
                       contrastRatio(keywordLight, palette().editorBack) < 3.0 && keywordDark != keywordLight,
                   "Dark mode turns dark language colours into readable light ones");
-            check(all(*text) == "int main() { return 0; }" && !text->dirty() &&
-                      sci(h, SCI_GETSTYLEAT, 0) == cppKeyword,
+            check(all(*text) == "int main() { return 0; }" && !text->dirty() && styleBefore == cppKeyword &&
+                      sci(h, SCI_GETSTYLEAT, returnAt) == styleBefore,
                   "Switching theme keeps text, saved state and lexer styling");
             check(ListView_GetBkColor(a.outlineList) == palette().panel && ListView_GetBkColor(a.resultsList) == palette().panel,
                   "Dark mode recolours the side panels");
