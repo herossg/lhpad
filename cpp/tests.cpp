@@ -842,8 +842,10 @@ int runTests(App &a, bool full) {
             check(palette().dark && sci(h, SCI_STYLEGETBACK, STYLE_DEFAULT) == static_cast<LRESULT>(palette().editorBack) &&
                       luminance(static_cast<COLORREF>(sci(h, SCI_STYLEGETBACK, STYLE_DEFAULT))) < 60,
                   "Dark mode gives editors a dark background");
-            check(luminance(keywordDark) > 140 && luminance(keywordLight) < 140 && keywordDark != keywordLight,
-                  "Dark mode turns dark language colours into light ones");
+            // Judge readability by the WCAG contrast ratio the adaptation targets, not a brightness cut-off.
+            check(contrastRatio(keywordDark, palette().editorBack) >= 4.5 &&
+                      contrastRatio(keywordLight, palette().editorBack) < 3.0 && keywordDark != keywordLight,
+                  "Dark mode turns dark language colours into readable light ones");
             check(all(*text) == "int main() { return 0; }" && !text->dirty() &&
                       sci(h, SCI_GETSTYLEAT, 0) == cppKeyword,
                   "Switching theme keeps text, saved state and lexer styling");
