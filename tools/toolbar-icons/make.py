@@ -86,6 +86,10 @@ icons = {
  "FollowTail": (lines(3, 13, [2.5], True) + lines(3, 10, [4.5], True) +
                 f'<path d="M8 6.5 V11 M5.5 8.8 L8 11.3 L10.5 8.8" fill="none" stroke="{OUTER}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
                 f'<rect x="2" y="12.5" width="12" height="2.5" rx="1" fill="{C["mint"]}" {S}/>'),
+ "AutoComplete": (f'<path d="M1.5 3.5 H6" {SO}/><path d="M7.5 1.5 V5" {SO}/>'
+                  f'<rect x="3.5" y="6.5" width="11" height="8" rx="1" fill="{C["page"]}" {S}/>'
+                  f'<rect x="4" y="7" width="10" height="2.5" fill="{C["sky"]}"/>'
+                  f'<path d="M5.5 8.25 H11" {S}/>' + lines(5.5, 12, [11.5]) + lines(5.5, 10, [13.2])),
  "Help": (f'<circle cx="8" cy="8" r="6.5" fill="{C["sky"]}" {S}/>'
           f'<path d="M6 6.2 A2 2 0 1 1 8.9 8 C8.3 8.3 8 8.7 8 9.4 V9.8" fill="none" stroke="{INK}" stroke-width="1.4" stroke-linecap="round"/>'
           f'<circle cx="8" cy="12" r="0.9" fill="{INK}"/>'),
@@ -102,8 +106,8 @@ for name, body in icons.items():
         cairosvg.svg2png(bytestring=dark.encode(), write_to=os.path.join(OUT_DIR, f"{name}-dark-{s}.png"), output_width=s, output_height=s)
 print(len(icons), "icons")
 # preview sheet: each icon at 16, 24, 32 actual pixels plus 4x zoom of 16 on light toolbar background
-order = ["NewFile","Open","Save","SaveAll","Undo","Redo","Find","Replace","FindInFiles","Bookmark","Source","Preview","Split","SplitEditor","Outline","Format","Compare","Record","RecordActive","Stop","Play","Repeat","Monitor","FollowTail","Help"]
-labels = {"NewFile":"새 문서","Open":"열기","Save":"저장","SaveAll":"모두 저장","Undo":"실행 취소","Redo":"다시 실행","Find":"찾기","Replace":"바꾸기","FindInFiles":"파일에서 찾기","Bookmark":"북마크","Source":"원문","Preview":"미리보기","Split":"미리보기 분할","SplitEditor":"문서 분할","Outline":"함수 목록","Format":"정렬","Compare":"비교","Record":"녹화","RecordActive":"녹화 중","Stop":"중지","Play":"실행","Repeat":"반복","Monitor":"로그 모니터","FollowTail":"끝 따라가기","Help":"도움말"}
+order = ["NewFile","Open","Save","SaveAll","Undo","Redo","Find","Replace","FindInFiles","Bookmark","Source","Preview","Split","SplitEditor","Outline","Format","Compare","Record","RecordActive","Stop","Play","Repeat","Monitor","FollowTail","AutoComplete","Help"]
+labels = {"NewFile":"새 문서","Open":"열기","Save":"저장","SaveAll":"모두 저장","Undo":"실행 취소","Redo":"다시 실행","Find":"찾기","Replace":"바꾸기","FindInFiles":"파일에서 찾기","Bookmark":"북마크","Source":"원문","Preview":"미리보기","Split":"미리보기 분할","SplitEditor":"문서 분할","Outline":"함수 목록","Format":"정렬","Compare":"비교","Record":"녹화","RecordActive":"녹화 중","Stop":"중지","Play":"실행","Repeat":"반복","Monitor":"로그 모니터","FollowTail":"끝 따라가기","AutoComplete":"자동 완성","Help":"도움말"}
 assert set(order) == set(icons)
 fontpath = None
 for p in ["/usr/share/fonts/truetype/nanum/NanumGothic.ttf","/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc","/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"]:

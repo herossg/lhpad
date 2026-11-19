@@ -99,6 +99,7 @@ enum Command {
     OutlinePanel,
     DarkMode,
     Complete,
+    AutoCompleteToggle,
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,

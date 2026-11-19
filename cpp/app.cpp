@@ -20,6 +20,7 @@ static const std::vector<std::pair<int, std::wstring>> toolbarItems = {
     {Split, L"미리보기 좌우 분할 (Ctrl+Alt+V)"},
     {SplitEditor, L"같은 문서 위아래 분할"},
     {OutlinePanel, L"함수 목록"},
+    {AutoCompleteToggle, L"입력할 때 자동 완성 켜기 / 끄기 (목록은 Ctrl+Space)"},
     {0, L""},
     {Format, L"문서 정렬 (Ctrl+Alt+F)"},
     {Compare, L"두 탭 비교 (Ctrl+Alt+C)"},
@@ -120,6 +121,7 @@ void App::buildMenu() {
     item(e, ToggleComment, L"주석 넣기 / 빼기\tCtrl+Q");
     item(e, BraceJump, L"짝 괄호로 이동\tCtrl+B");
     item(e, Complete, L"자동 완성 목록\tCtrl+Space");
+    item(e, AutoCompleteToggle, L"입력할 때 자동 완성");
     sep(e);
     item(e, AutoIndent, L"자동 들여쓰기");
     auto s = root(L"검색(&S)");
@@ -265,7 +267,7 @@ static HBITMAP buttonBitmap(int id, int size) {
         {Format, L"Format"},     {Compare, L"Compare"},     {Record, L"Record"},
         {-Record, L"RecordActive"}, {MacroStop, L"Stop"},   {Play, L"Play"},
         {Repeat, L"Repeat"},     {Monitor, L"Monitor"},     {FollowTail, L"FollowTail"},
-        {Help, L"Help"}};
+        {AutoCompleteToggle, L"AutoComplete"}, {Help, L"Help"}};
     if (auto it = artwork.find(id); it != artwork.end()) {
         auto folder = exeDir() / L"data" / L"toolbar";
         fs::path best;
@@ -709,6 +711,7 @@ void App::update() {
     check(ResultsPanel, resultsVisible);
     check(OutlinePanel, outlineVisible);
     check(DarkMode, darkMode);
+    check(AutoCompleteToggle, autoComplete);
     check(SplitEditor, d && d->secondary);
     check(WhiteSpace, whiteSpace);
     check(EolVisible, eolVisible);
@@ -718,8 +721,9 @@ void App::update() {
     check(FollowTail, d && d->follow);
     check(Scripts, d && d->scripts);
     check(Wrap, d && d->editor && sci(d->editor, SCI_GETWRAPMODE));
-    for (int id : {Source, Preview, Split, Monitor, FollowTail, SplitEditor, OutlinePanel}) {
-        bool checked = id == OutlinePanel ? outlineVisible
+    for (int id : {Source, Preview, Split, Monitor, FollowTail, SplitEditor, OutlinePanel, AutoCompleteToggle}) {
+        bool checked = id == OutlinePanel         ? outlineVisible
+                       : id == AutoCompleteToggle ? autoComplete
                        : !d              ? false
                        : id == Source    ? d->viewMode == 0
                        : id == Preview   ? d->viewMode == 1
@@ -982,6 +986,11 @@ void App::command(int id) {
             break;
         case Complete:
             showCompletion(true);
+            break;
+        case AutoCompleteToggle:
+            autoComplete = !autoComplete;
+            if (!autoComplete && d && d->editor && sci(d->editor, SCI_AUTOCACTIVE))
+                sci(d->editor, SCI_AUTOCCANCEL);
             break;
         case Find:
             showFind(false);

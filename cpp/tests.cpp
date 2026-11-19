@@ -869,6 +869,13 @@ int runTests(App &a, bool full) {
             a.completion = {};
             a.showCompletion(false);
             check(!sci(h, SCI_AUTOCACTIVE), "Turning auto-completion off stops the automatic list");
+            a.command(AutoCompleteToggle);
+            check(a.autoComplete && SendMessageW(a.toolbar, TB_ISBUTTONCHECKED, AutoCompleteToggle, 0) &&
+                      (GetMenuState(a.menu, AutoCompleteToggle, MF_BYCOMMAND) & MF_CHECKED),
+                  "Toolbar button turns auto-completion on and shows the pressed state");
+            a.command(AutoCompleteToggle);
+            check(!a.autoComplete && !SendMessageW(a.toolbar, TB_ISBUTTONCHECKED, AutoCompleteToggle, 0),
+                  "Toolbar button turns auto-completion off again");
             a.autoComplete = true;
             a.recording = true;
             a.showCompletion(false);
