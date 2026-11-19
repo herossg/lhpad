@@ -829,6 +829,39 @@ int runTests(App &a, bool full) {
             a.showOutline(false);
             useLanguage("normal");
             check(!IsWindowVisible(a.outlineList), "Outline panel can be hidden");
+            // 1.5 dark mode: palette, editor recolouring without touching text, panels and menu state.
+            constexpr int cppKeyword = 5; // SCE_C_WORD in Lexilla's SciLexer.h
+            auto luminance = [](COLORREF c) { return (GetRValue(c) * 299 + GetGValue(c) * 587 + GetBValue(c) * 114) / 1000; };
+            useLanguage("cpp");
+            setText(*text, "int main() { return 0; }");
+            sci(h, SCI_COLOURISE, 0, -1);
+            auto keywordLight = static_cast<COLORREF>(sci(h, SCI_STYLEGETFORE, cppKeyword));
+            a.darkMode = true;
+            a.applyDarkMode();
+            auto keywordDark = static_cast<COLORREF>(sci(h, SCI_STYLEGETFORE, cppKeyword));
+            check(palette().dark && sci(h, SCI_STYLEGETBACK, STYLE_DEFAULT) == static_cast<LRESULT>(palette().editorBack) &&
+                      luminance(static_cast<COLORREF>(sci(h, SCI_STYLEGETBACK, STYLE_DEFAULT))) < 60,
+                  "Dark mode gives editors a dark background");
+            check(luminance(keywordDark) > 140 && luminance(keywordLight) < 140 && keywordDark != keywordLight,
+                  "Dark mode turns dark language colours into light ones");
+            check(all(*text) == "int main() { return 0; }" && !text->dirty() &&
+                      sci(h, SCI_GETSTYLEAT, 0) == cppKeyword,
+                  "Switching theme keeps text, saved state and lexer styling");
+            check(ListView_GetBkColor(a.outlineList) == palette().panel && ListView_GetBkColor(a.resultsList) == palette().panel,
+                  "Dark mode recolours the side panels");
+            check((GetMenuState(a.menu, DarkMode, MF_BYCOMMAND) & MF_CHECKED) != 0, "Dark mode menu item shows its state");
+            check(luminance(adaptForeground(RGB(0, 0, 128))) > 140 && adaptBackground(RGB(255, 255, 255)) == palette().editorBack,
+                  "Colour adaptation lightens text and maps white backgrounds to the editor background");
+            check(contrastRatio(adaptForeground(RGB(0, 0, 255)), palette().editorBack) >= 4.5 &&
+                      contrastRatio(adaptForeground(RGB(255, 0, 0)), palette().editorBack) >= 4.5,
+                  "Adapted pure blue and red text keep at least 4.5:1 contrast");
+            a.darkMode = false;
+            a.applyDarkMode();
+            check(!palette().dark && sci(h, SCI_STYLEGETBACK, STYLE_DEFAULT) == static_cast<LRESULT>(RGB(253, 253, 252)) &&
+                      static_cast<COLORREF>(sci(h, SCI_STYLEGETFORE, cppKeyword)) == keywordLight &&
+                      ListView_GetBkColor(a.outlineList) == GetSysColor(COLOR_WINDOW),
+                  "Turning dark mode off restores the original light colours");
+            useLanguage("normal");
         }
         setText(*text, "alpha beta alpha\nalpha");
         a.search = {"alpha", "가나다", 0};

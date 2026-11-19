@@ -97,6 +97,7 @@ enum Command {
     BookmarkDelete,
     SplitEditor,
     OutlinePanel,
+    DarkMode,
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,
@@ -227,6 +228,7 @@ class App {
     std::vector<OutlineItem> outlineItems;
     std::string outlineDocId;
     uint64_t outlineRevision = ~uint64_t{};
+    bool darkMode = false;
     std::vector<MacroStep> recorded, lastMacro;
     std::vector<SavedMacroEntry> savedMacros;
     std::set<std::string> compareIds;
@@ -297,6 +299,11 @@ class App {
     void showOutline(bool visible);
     void refreshOutline(bool force);
     void goToOutline(int index);
+    void applyDarkMode();
+    void rebuildToolbarImages();
+    void paintTabs(HDC dc);
+    void paintStatus(HDC dc);
+    bool darkMenuMessage(UINT message, WPARAM w, LPARAM l, LRESULT &result);
     void select(int index);
     void open(const fs::path &path, std::optional<bool> binary = {}, std::optional<Encoding> encoding = {});
     void openPaths(const std::vector<std::string> &paths, bool activate = true);

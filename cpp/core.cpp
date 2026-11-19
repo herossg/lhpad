@@ -1,5 +1,7 @@
 #include "core.h"
 #include <bcrypt.h>
+#include <cmath>
+#include <uxtheme.h>
 #include <regex>
 #include <iomanip>
 #include "vendor/md4c/md4c-html.h"
@@ -709,6 +711,195 @@ std::string Languages::detect(const fs::path &p) const {
     }
     return "normal";
 }
+namespace {
+Palette lightPalette() {
+    Palette p;
+    p.dark = false;
+    p.window = GetSysColor(COLOR_BTNFACE);
+    p.panel = GetSysColor(COLOR_WINDOW);
+    p.text = GetSysColor(COLOR_BTNTEXT);
+    p.muted = RGB(113, 128, 130);
+    p.border = RGB(168, 176, 184);
+    p.hot = RGB(229, 243, 255);
+    p.editorBack = RGB(253, 253, 252);
+    p.editorText = RGB(34, 42, 53);
+    p.caret = RGB(0, 117, 111);
+    p.caretLine = RGB(242, 247, 246);
+    p.selection = RGB(192, 226, 220);
+    p.selectionText = RGB(20, 47, 57);
+    p.lineNumber = RGB(136, 145, 149);
+    p.marginBack = RGB(242, 245, 245);
+    p.foldMarker = RGB(132, 132, 132);
+    p.whiteSpace = RGB(160, 172, 178);
+    p.diffAdded = RGB(208, 242, 221);
+    p.diffRemoved = RGB(255, 219, 219);
+    p.diffChanged = RGB(255, 239, 191);
+    p.hexBack = RGB(253, 253, 252);
+    p.hexText = RGB(34, 42, 53);
+    p.hexOffset = RGB(113, 128, 130);
+    p.hexHeader = RGB(233, 242, 239);
+    p.hexInspector = RGB(241, 246, 244);
+    p.hexChanged = RGB(185, 92, 29);
+    p.hexSelection = RGB(192, 226, 220);
+    p.hexSelectionOther = RGB(222, 237, 246);
+    return p;
+}
+Palette darkPalette() {
+    Palette p;
+    p.dark = true;
+    p.window = RGB(32, 34, 37);
+    p.panel = RGB(37, 40, 44);
+    p.text = RGB(222, 226, 230);
+    p.muted = RGB(150, 158, 166);
+    p.border = RGB(70, 76, 82);
+    p.hot = RGB(55, 62, 68);
+    p.editorBack = RGB(30, 32, 35);
+    p.editorText = RGB(220, 224, 228);
+    p.caret = RGB(120, 220, 200);
+    p.caretLine = RGB(40, 44, 48);
+    p.selection = RGB(38, 79, 79);
+    p.selectionText = RGB(235, 240, 240);
+    p.lineNumber = RGB(112, 120, 128);
+    p.marginBack = RGB(36, 38, 42);
+    p.foldMarker = RGB(120, 126, 132);
+    p.whiteSpace = RGB(84, 92, 100);
+    p.diffAdded = RGB(30, 66, 48);
+    p.diffRemoved = RGB(82, 38, 42);
+    p.diffChanged = RGB(78, 66, 28);
+    p.hexBack = RGB(30, 32, 35);
+    p.hexText = RGB(214, 220, 226);
+    p.hexOffset = RGB(130, 140, 146);
+    p.hexHeader = RGB(40, 46, 48);
+    p.hexInspector = RGB(36, 40, 42);
+    p.hexChanged = RGB(240, 165, 95);
+    p.hexSelection = RGB(38, 79, 79);
+    p.hexSelectionOther = RGB(40, 58, 72);
+    return p;
+}
+Palette current = lightPalette();
+void toHsl(COLORREF c, double &h, double &s, double &l) {
+    double r = GetRValue(c) / 255.0, g = GetGValue(c) / 255.0, b = GetBValue(c) / 255.0;
+    double mx = std::max({r, g, b}), mn = std::min({r, g, b}), d = mx - mn;
+    l = (mx + mn) / 2;
+    s = d == 0 ? 0 : d / (1 - std::abs(2 * l - 1));
+    h = d == 0 ? 0 : mx == r ? std::fmod((g - b) / d + 6, 6) : mx == g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+}
+COLORREF fromHsl(double h, double s, double l) {
+    double c = (1 - std::abs(2 * l - 1)) * s, x = c * (1 - std::abs(std::fmod(h / 60, 2) - 1)), m = l - c / 2;
+    double r = 0, g = 0, b = 0;
+    if (h < 60)
+        r = c, g = x;
+    else if (h < 120)
+        r = x, g = c;
+    else if (h < 180)
+        g = c, b = x;
+    else if (h < 240)
+        g = x, b = c;
+    else if (h < 300)
+        r = x, b = c;
+    else
+        r = c, b = x;
+    auto byte = [](double v) { return static_cast<BYTE>(std::clamp(std::lround(v * 255), 0l, 255l)); };
+    return RGB(byte(r + m), byte(g + m), byte(b + m));
+}
+} // namespace
+const Palette &palette() {
+    return current;
+}
+void setDarkMode(bool dark) {
+    current = dark ? darkPalette() : lightPalette();
+}
+bool systemPrefersDark() {
+    DWORD value = 1, size = sizeof(value);
+    return RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                        L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &value, &size) == ERROR_SUCCESS &&
+           value == 0;
+}
+double relativeLuminance(COLORREF c) {
+    auto channel = [](BYTE v) {
+        double x = v / 255.0;
+        return x <= 0.03928 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * channel(GetRValue(c)) + 0.7152 * channel(GetGValue(c)) + 0.0722 * channel(GetBValue(c));
+}
+double contrastRatio(COLORREF a, COLORREF b) {
+    double x = relativeLuminance(a), y = relativeLuminance(b);
+    return (std::max(x, y) + 0.05) / (std::min(x, y) + 0.05);
+}
+COLORREF adaptForeground(COLORREF colour) {
+    if (!current.dark)
+        return colour;
+    double h, s, l;
+    toHsl(colour, h, s, l);
+    // Dark text becomes light text of the same hue; already light colours stay readable. Saturated blues
+    // and reds look darker than their lightness says, so raise lightness until WCAG AA contrast (4.5).
+    s = std::min(s, 0.75);
+    l = std::clamp(1.0 - l * 0.75, 0.62, 0.88);
+    auto result = fromHsl(h, s, l);
+    while (contrastRatio(result, current.editorBack) < 4.5 && l < 0.95) {
+        l += 0.03;
+        result = fromHsl(h, s, l);
+    }
+    return result;
+}
+COLORREF adaptBackground(COLORREF colour) {
+    if (!current.dark)
+        return colour;
+    double h, s, l;
+    toHsl(colour, h, s, l);
+    if (l > 0.82)
+        return current.editorBack; // White and near-white backgrounds are the editor background.
+    return fromHsl(h, s * 0.55, std::clamp(0.13 + (1.0 - l) * 0.12, 0.13, 0.26));
+}
+void Languages::theme(HWND h) {
+    auto &p = current;
+    sci(h, SCI_STYLESETFORE, STYLE_LINENUMBER, p.lineNumber);
+    sci(h, SCI_STYLESETBACK, STYLE_LINENUMBER, p.marginBack);
+    sci(h, SCI_STYLESETFORE, STYLE_INDENTGUIDE, p.whiteSpace);
+    sci(h, SCI_STYLESETBACK, STYLE_INDENTGUIDE, p.editorBack);
+    sci(h, SCI_SETCARETFORE, p.caret);
+    sci(h, SCI_SETCARETLINEBACK, p.caretLine);
+    sci(h, SCI_SETSELFORE, 1, p.selectionText);
+    sci(h, SCI_SETSELBACK, 1, p.selection);
+    sci(h, SCI_SETWHITESPACEFORE, 1, p.whiteSpace);
+    sci(h, SCI_SETFOLDMARGINCOLOUR, 1, p.marginBack);
+    sci(h, SCI_SETFOLDMARGINHICOLOUR, 1, p.marginBack);
+    for (int i = 25; i <= 31; i++) {
+        sci(h, SCI_MARKERSETFORE, i, p.marginBack);
+        sci(h, SCI_MARKERSETBACK, i, p.foldMarker);
+    }
+    sci(h, SCI_MARKERSETBACK, 20, p.diffAdded);
+    sci(h, SCI_MARKERSETBACK, 21, p.diffRemoved);
+    sci(h, SCI_MARKERSETBACK, 22, p.diffChanged);
+    // Scroll bars follow the window theme; the dark Explorer theme exists on Windows 10 1809+.
+    SetWindowTheme(h, p.dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+}
+static void styleColours(HWND h, const pugi::xml_node &s, int id) {
+    for (auto pair : {std::pair{"fgColor", SCI_STYLESETFORE}, std::pair{"bgColor", SCI_STYLESETBACK}}) {
+        auto value = s.attribute(pair.first);
+        if (value) {
+            auto rgb = strtoul(value.value(), nullptr, 16);
+            COLORREF colour = RGB(rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255);
+            sci(h, pair.second, id, pair.second == SCI_STYLESETFORE ? adaptForeground(colour) : adaptBackground(colour));
+        }
+    }
+    auto font = s.attribute("fontStyle").as_int();
+    sci(h, SCI_STYLESETBOLD, id, font & 1);
+    sci(h, SCI_STYLESETITALIC, id, (font >> 1) & 1);
+}
+void Languages::recolor(HWND h, const std::string &name, bool large) const {
+    sci(h, SCI_STYLESETFORE, STYLE_DEFAULT, current.editorText);
+    sci(h, SCI_STYLESETBACK, STYLE_DEFAULT, current.editorBack);
+    sci(h, SCI_STYLECLEARALL);
+    if (!large)
+        for (auto n : styles.child("NotepadPlus").child("LexerStyles").children("LexerType"))
+            if (name == n.attribute("name").as_string())
+                for (auto s : n.children("WordsStyle"))
+                    if (int id = s.attribute("styleID").as_int(-1); id >= 0)
+                        styleColours(h, s, id);
+    theme(h);
+}
 CommentTokens Languages::comment(const std::string &name) const {
     // Notepad++ langs.xml carries commentLine / commentStart / commentEnd per language.
     CommentTokens tokens;
@@ -735,9 +926,13 @@ void Languages::apply(HWND h, const std::string &name, bool large) const {
     auto lexer = large || it == items.end() ? "null" : it->lexer.c_str();
     sci(h, SCI_CLEARDOCUMENTSTYLE);
     sci(h, SCI_SETILEXER, 0, reinterpret_cast<LPARAM>(create(lexer)));
+    sci(h, SCI_STYLESETFORE, STYLE_DEFAULT, current.editorText);
+    sci(h, SCI_STYLESETBACK, STYLE_DEFAULT, current.editorBack);
     sci(h, SCI_STYLECLEARALL);
-    if (large)
+    if (large) {
+        theme(h);
         return;
+    }
     for (int i = 0; i < 9; i++)
         str(h, SCI_SETKEYWORDS, "", i);
     pugi::xml_node style, word;
@@ -753,16 +948,7 @@ void Languages::apply(HWND h, const std::string &name, bool large) const {
         int id = s.attribute("styleID").as_int(-1);
         if (id < 0)
             continue;
-        for (auto pair : {std::pair{"fgColor", SCI_STYLESETFORE}, std::pair{"bgColor", SCI_STYLESETBACK}}) {
-            auto value = s.attribute(pair.first);
-            if (value) {
-                auto rgb = strtoul(value.value(), nullptr, 16);
-                sci(h, pair.second, id, RGB(rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255));
-            }
-        }
-        auto font = s.attribute("fontStyle").as_int();
-        sci(h, SCI_STYLESETBOLD, id, font & 1);
-        sci(h, SCI_STYLESETITALIC, id, (font >> 1) & 1);
+        styleColours(h, s, id);
         std::string cls = s.attribute("keywordClass").as_string();
         int index = -1;
         for (size_t i = 0; i < classes.size(); i++)
@@ -795,6 +981,7 @@ void Languages::apply(HWND h, const std::string &name, bool large) const {
     sci(h, SCI_SETMARGINWIDTHN, 1, folding ? MulDiv(20, GetDpiForWindow(h), 96) : 0);
     sci(h, SCI_SETMARGINSENSITIVEN, 1, folding);
     sci(h, SCI_COLOURISE, 0, std::min<LRESULT>(sci(h, SCI_GETLENGTH), 65536));
+    theme(h);
 }
 std::vector<std::string> lines(const std::string &text) {
     std::vector<std::string> out;

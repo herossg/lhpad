@@ -164,6 +164,7 @@ void App::buildMenu() {
     item(viewMenu, EditorFont, L"텍스트 편집기 글꼴…");
     item(viewMenu, SplitEditor, L"같은 문서 위아래 분할");
     item(viewMenu, OutlinePanel, L"함수 목록");
+    item(viewMenu, DarkMode, L"다크 모드");
     auto foldMenu = CreatePopupMenu();
     AppendMenuW(viewMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(foldMenu), L"코드 접기");
     item(foldMenu, FoldCurrent, L"현재 구간 접기 / 펼치기\tCtrl+Alt+B");
@@ -268,8 +269,11 @@ static HBITMAP buttonBitmap(int id, int size) {
         auto folder = exeDir() / L"data" / L"toolbar";
         fs::path best;
         int bestSize = 0;
+        // Dark mode prefers the light-outline set (<Name>-dark-<px>.png) and falls back to the normal one.
         for (int candidate : {16, 20, 24, 32, 40, 48}) {
-            auto path = folder / (it->second + L"-" + std::to_wstring(candidate) + L".png");
+            auto path = folder / (it->second + (palette().dark ? L"-dark-" : L"-") + std::to_wstring(candidate) + L".png");
+            if (!disk::exists(path))
+                path = folder / (it->second + L"-" + std::to_wstring(candidate) + L".png");
             if (!disk::exists(path))
                 continue;
             // Smallest size that is at least as large as needed; otherwise the largest available.
@@ -388,6 +392,25 @@ static HBITMAP buttonBitmap(int id, int size) {
     bitmap.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &out);
     return out;
 }
+void App::rebuildToolbarImages() {
+    // Same order as buildToolbar so every button keeps its image index.
+    int size = MulDiv(16, dpi, 96);
+    auto images = ImageList_Create(size, size, ILC_COLOR32 | ILC_MASK, 24, 4);
+    for (auto &[id, label] : toolbarItems)
+        if (id) {
+            auto bitmap = buttonBitmap(id, size);
+            ImageList_Add(images, bitmap, nullptr);
+            DeleteObject(bitmap);
+        }
+    auto record = buttonBitmap(-Record, size);
+    ImageList_Add(images, record, nullptr);
+    DeleteObject(record);
+    SendMessageW(toolbar, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(images));
+    if (toolbarImages)
+        ImageList_Destroy(toolbarImages);
+    toolbarImages = images;
+    InvalidateRect(toolbar, nullptr, TRUE);
+}
 void App::buildToolbar() {
     int size = MulDiv(16, dpi, 96);
     toolbarImages = ImageList_Create(size, size, ILC_COLOR32 | ILC_MASK, 24, 4);
@@ -502,8 +525,12 @@ void App::start() {
         }
     }
     loadMacros();
-    if (!demo)
+    if (!demo) {
+        darkMode = systemPrefersDark(); // First run follows Windows; the session keeps the user's choice.
         restore();
+    }
+    if (darkMode)
+        applyDarkMode();
     auto startupFiles = std::exchange(initialFiles, {});
     openPaths(startupFiles, false);
     if (docs.empty())
@@ -680,6 +707,7 @@ void App::update() {
     check(AutoIndent, autoIndent);
     check(ResultsPanel, resultsVisible);
     check(OutlinePanel, outlineVisible);
+    check(DarkMode, darkMode);
     check(SplitEditor, d && d->secondary);
     check(WhiteSpace, whiteSpace);
     check(EolVisible, eolVisible);
@@ -946,6 +974,10 @@ void App::command(int id) {
             break;
         case OutlinePanel:
             showOutline(!outlineVisible);
+            break;
+        case DarkMode:
+            darkMode = !darkMode;
+            applyDarkMode();
             break;
         case Find:
             showFind(false);
@@ -1293,6 +1325,18 @@ static std::vector<std::string> dropPaths(HDROP h) {
 }
 LRESULT CALLBACK App::childProc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id, DWORD_PTR data) {
     auto *a = reinterpret_cast<App *>(data);
+    if (palette().dark && (h == a->tabs || h == a->status) && (m == WM_PAINT || m == WM_ERASEBKGND)) {
+        if (m == WM_ERASEBKGND)
+            return 1;
+        PAINTSTRUCT paint{};
+        auto dc = BeginPaint(h, &paint);
+        if (h == a->tabs)
+            a->paintTabs(dc);
+        else
+            a->paintStatus(dc);
+        EndPaint(h, &paint);
+        return 0;
+    }
     if (h == a->tabs && a->tabCloseMessage(m, w, l))
         return m == WM_SETCURSOR ? TRUE : 0;
     if (m == WM_DROPFILES) {
@@ -1367,11 +1411,34 @@ LRESULT CALLBACK App::childProc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id,
 LRESULT App::notify(NMHDR *n) {
     if (n->hwndFrom == toolbar && n->code == NM_CUSTOMDRAW) {
         auto *draw = reinterpret_cast<NMTBCUSTOMDRAW *>(n);
-        if (draw->nmcd.dwDrawStage == CDDS_PREPAINT)
-            return CDRF_NOTIFYPOSTPAINT;
+        auto &p = palette();
+        if (draw->nmcd.dwDrawStage == CDDS_PREPAINT) {
+            if (!p.dark)
+                return CDRF_NOTIFYPOSTPAINT;
+            auto brush = CreateSolidBrush(p.window);
+            FillRect(draw->nmcd.hdc, &draw->nmcd.rc, brush);
+            DeleteObject(brush);
+            return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+        }
+        if (draw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT && p.dark) {
+            // Draw hot / pressed / checked backgrounds ourselves; the toolbar then draws only the image.
+            auto state = draw->nmcd.uItemState;
+            if (state & (CDIS_HOT | CDIS_SELECTED | CDIS_CHECKED)) {
+                auto brush = CreateSolidBrush(state & (CDIS_SELECTED | CDIS_CHECKED) ? p.selection : p.hot);
+                auto pen = CreatePen(PS_SOLID, 1, p.border);
+                auto oldBrush = SelectObject(draw->nmcd.hdc, brush), oldPen = SelectObject(draw->nmcd.hdc, pen);
+                RoundRect(draw->nmcd.hdc, draw->nmcd.rc.left, draw->nmcd.rc.top, draw->nmcd.rc.right,
+                          draw->nmcd.rc.bottom, MulDiv(4, dpi, 96), MulDiv(4, dpi, 96));
+                SelectObject(draw->nmcd.hdc, oldBrush);
+                SelectObject(draw->nmcd.hdc, oldPen);
+                DeleteObject(brush);
+                DeleteObject(pen);
+            }
+            return TBCDRF_NOEDGES | TBCDRF_NOBACKGROUND | TBCDRF_NOOFFSET;
+        }
         if (draw->nmcd.dwDrawStage == CDDS_POSTPAINT) {
             // Keep group boundaries visible with the flat toolbar theme.
-            auto pen = CreatePen(PS_SOLID, std::max(1, MulDiv(1, dpi, 96)), RGB(168, 176, 184));
+            auto pen = CreatePen(PS_SOLID, std::max(1, MulDiv(1, dpi, 96)), p.dark ? p.border : RGB(168, 176, 184));
             auto previous = SelectObject(draw->nmcd.hdc, pen);
             for (size_t i = 0; i < toolbarItems.size(); i++) {
                 if (toolbarItems[i].first)
@@ -1504,7 +1571,34 @@ LRESULT CALLBACK App::windowProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     if (!a)
         return DefWindowProcW(h, m, w, l);
     try {
+        if (LRESULT handled = 0; a->darkMenuMessage(m, w, l, handled))
+            return handled;
         switch (m) {
+        case WM_ERASEBKGND:
+            if (palette().dark) {
+                RECT r{};
+                GetClientRect(h, &r);
+                auto brush = CreateSolidBrush(palette().window);
+                FillRect(reinterpret_cast<HDC>(w), &r, brush);
+                DeleteObject(brush);
+                return 1;
+            }
+            break;
+        case WM_CTLCOLORSTATIC:
+            if (palette().dark && reinterpret_cast<HWND>(l) == a->resultsLabel) {
+                static HBRUSH brush = nullptr;
+                static COLORREF colour = CLR_INVALID;
+                if (colour != palette().window) {
+                    if (brush)
+                        DeleteObject(brush);
+                    colour = palette().window;
+                    brush = CreateSolidBrush(colour);
+                }
+                SetTextColor(reinterpret_cast<HDC>(w), palette().text);
+                SetBkColor(reinterpret_cast<HDC>(w), colour);
+                return reinterpret_cast<LRESULT>(brush);
+            }
+            break;
         case WM_SIZE:
             if (w == SIZE_MAXIMIZED)
                 a->maximized = true;

@@ -76,8 +76,25 @@ void App::drawTabItem(const DRAWITEMSTRUCT &draw) {
     int saved = SaveDC(dc);
     IntersectClipRect(dc, r.left, r.top, std::min(r.right, visible.right), r.bottom);
     bool selected = TabCtrl_GetCurSel(tabs) == index;
-    auto theme = OpenThemeData(tabs, L"TAB");
-    if (theme) {
+    auto &colours = palette();
+    auto theme = colours.dark ? nullptr : OpenThemeData(tabs, L"TAB");
+    if (colours.dark) {
+        auto brush = CreateSolidBrush(selected ? colours.editorBack : colours.panel);
+        FillRect(dc, &r, brush);
+        DeleteObject(brush);
+        auto pen = CreatePen(PS_SOLID, 1, colours.border);
+        auto oldPen = SelectObject(dc, pen);
+        MoveToEx(dc, r.right - 1, r.top + MulDiv(4, GetDpiForWindow(tabs), 96), nullptr);
+        LineTo(dc, r.right - 1, r.bottom - MulDiv(4, GetDpiForWindow(tabs), 96));
+        SelectObject(dc, oldPen);
+        DeleteObject(pen);
+        if (selected) {
+            auto accent = CreateSolidBrush(colours.caret);
+            RECT bar{r.left, r.top, r.right, r.top + MulDiv(2, GetDpiForWindow(tabs), 96)};
+            FillRect(dc, &bar, accent);
+            DeleteObject(accent);
+        }
+    } else if (theme) {
         DrawThemeBackground(theme, dc, TABP_TABITEM, selected ? TIS_SELECTED : TIS_NORMAL, &r, nullptr);
         CloseThemeData(theme);
     } else
@@ -93,15 +110,16 @@ void App::drawTabItem(const DRAWITEMSTRUCT &draw) {
     auto name = wide((compareIds.contains(docs[index]->id) ? "✓ " : "") + docs[index]->name);
     SelectObject(dc, font);
     SetBkMode(dc, TRANSPARENT);
-    SetTextColor(dc, GetSysColor(COLOR_BTNTEXT));
+    SetTextColor(dc, colours.dark ? colours.text : GetSysColor(COLOR_BTNTEXT));
     DrawTextW(dc, name.c_str(), static_cast<int>(name.size()), &title,
               DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
     if (!IsRectEmpty(&close)) {
         bool hot = hotTabClose == index && !busy && !playing;
         bool pressed = hot && pressedTabClose == docs[index]->id;
         if (hot) {
-            auto brush = CreateSolidBrush(pressed ? RGB(247, 181, 188) : RGB(255, 228, 231));
-            auto pen = CreatePen(PS_SOLID, 1, pressed ? RGB(199, 92, 108) : RGB(230, 166, 174));
+            auto brush = CreateSolidBrush(colours.dark ? (pressed ? RGB(120, 52, 62) : RGB(86, 44, 52))
+                                                       : (pressed ? RGB(247, 181, 188) : RGB(255, 228, 231)));
+            auto pen = CreatePen(PS_SOLID, 1, colours.dark ? RGB(150, 80, 92) : pressed ? RGB(199, 92, 108) : RGB(230, 166, 174));
             auto oldBrush = SelectObject(dc, brush), oldPen = SelectObject(dc, pen);
             RoundRect(dc, close.left, close.top, close.right, close.bottom, MulDiv(6, scale, 96),
                       MulDiv(6, scale, 96));
@@ -110,7 +128,9 @@ void App::drawTabItem(const DRAWITEMSTRUCT &draw) {
             DeleteObject(brush);
             DeleteObject(pen);
         }
-        SetTextColor(dc, busy || playing ? RGB(168, 174, 181) : hot ? RGB(157, 45, 64) : RGB(82, 103, 117));
+        SetTextColor(dc, busy || playing ? (colours.dark ? RGB(90, 96, 102) : RGB(168, 174, 181))
+                         : hot           ? (colours.dark ? RGB(255, 170, 180) : RGB(157, 45, 64))
+                                         : (colours.dark ? colours.muted : RGB(82, 103, 117)));
         DrawTextW(dc, L"×", 1, &close, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_NOPREFIX);
     }
     RestoreDC(dc, saved);

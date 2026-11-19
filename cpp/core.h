@@ -152,6 +152,23 @@ class BinaryBuffer {
 struct Language {
     std::string name, display, lexer;
 };
+// Colours for everything LHPad paints itself. Light values keep the original pastel look; the dark
+// set is used when dark mode is on. Lexer colours from stylers.xml are adapted with adaptForeground /
+// adaptBackground so every language gets a readable dark variant without a separate theme file.
+struct Palette {
+    bool dark = false;
+    COLORREF window, panel, text, muted, border, hot;
+    COLORREF editorBack, editorText, caret, caretLine, selection, selectionText, lineNumber, marginBack,
+        foldMarker, whiteSpace;
+    COLORREF diffAdded, diffRemoved, diffChanged;
+    COLORREF hexBack, hexText, hexOffset, hexHeader, hexInspector, hexChanged, hexSelection, hexSelectionOther;
+};
+const Palette &palette();
+void setDarkMode(bool dark);
+bool systemPrefersDark();
+COLORREF adaptForeground(COLORREF colour);
+double contrastRatio(COLORREF a, COLORREF b);
+COLORREF adaptBackground(COLORREF colour);
 struct CommentTokens {
     std::string line, start, end;
 };
@@ -164,6 +181,10 @@ class Languages {
     std::string detect(const fs::path &path) const;
     CommentTokens comment(const std::string &name) const;
     void apply(HWND sci, const std::string &name, bool large = false) const;
+    // Re-applies colours only (theme change) without touching the lexer, folding or styling state.
+    void recolor(HWND sci, const std::string &name, bool large = false) const;
+    // Editor chrome colours: margins, caret, selection, fold markers, diff markers.
+    static void theme(HWND sci);
 };
 inline LRESULT sci(HWND h, UINT m, WPARAM w = 0, LPARAM l = 0) {
     return SendMessageW(h, m, w, l);

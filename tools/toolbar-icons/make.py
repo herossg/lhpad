@@ -10,13 +10,17 @@ INK = "#3B5160"
 C = dict(mint="#BFE7D7", sky="#BCDDF4", lav="#DACFF3", peach="#F9D5BC", amber="#FBE3A3",
          pink="#F7C3C3", teal="#A8DCD3", page="#FFFFFF", red="#FFB3B3", blue="#A9D3F5")
 S = f'stroke="{INK}" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"'
+# OUTER marks strokes drawn on the transparent background (arrows, handles, free lines). It renders the
+# same as INK, but the dark-mode variant lightens only these so details drawn on pastel fills stay dark.
+OUTER = "#3B5161"
+SO = f'stroke="{OUTER}" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"'
 def page(x=3.5, y=1.5, w=9, h=13, fill=C["page"], fold=3):
     return (f'<path d="M{x} {y} H{x+w-fold} L{x+w} {y+fold} V{y+h} H{x} Z" fill="{fill}" {S}/>'
             f'<path d="M{x+w-fold} {y} V{y+fold} H{x+w}" fill="none" {S}/>')
-def lines(x1, x2, ys):
-    return "".join(f'<path d="M{x1} {y} H{x2}" {S}/>' for y in ys)
+def lines(x1, x2, ys, outer=False):
+    return "".join(f'<path d="M{x1} {y} H{x2}" {SO if outer else S}/>' for y in ys)
 def magnifier(cx, cy, r, fill, hx, hy):
-    return (f'<path d="M{cx + r*0.7:.2f} {cy + r*0.7:.2f} L{hx} {hy}" stroke="{INK}" stroke-width="2" stroke-linecap="round"/>'
+    return (f'<path d="M{cx + r*0.7:.2f} {cy + r*0.7:.2f} L{hx} {hy}" stroke="{OUTER}" stroke-width="2" stroke-linecap="round"/>'
             f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{fill}" {S}/>')
 def folder(fill_back=C["amber"], fill_front="#FFF1CC"):
     return (f'<path d="M1.5 3.5 H5.5 L7 5 H13.5 V13.5 H1.5 Z" fill="{fill_back}" {S}/>'
@@ -28,8 +32,8 @@ def floppy(x, y, s, fill):
             f'<path d="M{p(3,0)} V{y+3.5*k:.2f} H{x+8*k:.2f} V{y:.2f}" fill="{C["page"]}" {S}/>'
             f'<path d="M{p(2.5,12)} V{y+7.5*k:.2f} H{x+9.5*k:.2f} V{y+12*k:.2f}" fill="{C["page"]}" {S}/>')
 def arrow_undo(mirror=False):
-    g = (f'<path d="M3 6.5 H10 A3.5 3.5 0 0 1 10 13.5 H6.5" fill="none" stroke="{INK}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
-         f'<path d="M6 3.5 L3 6.5 L6 9.5" fill="none" stroke="{INK}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>')
+    g = (f'<path d="M3 6.5 H10 A3.5 3.5 0 0 1 10 13.5 H6.5" fill="none" stroke="{OUTER}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+         f'<path d="M6 3.5 L3 6.5 L6 9.5" fill="none" stroke="{OUTER}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>')
     return f'<g transform="translate(16 0) scale(-1 1)">{g}</g>' if mirror else g
 icons = {
  "NewFile": page(2.5, 1.5, 9, 12.5) + lines(4.5, 8, [6.5, 8.5]) +
@@ -43,9 +47,9 @@ icons = {
  "Find": magnifier(6.5, 6.5, 4.5, C["sky"], 14, 14),
  "Replace": (f'<rect x="1.5" y="1.5" width="6" height="6" rx="1" fill="{C["peach"]}" {S}/>'
              f'<rect x="8.5" y="8.5" width="6" height="6" rx="1" fill="{C["mint"]}" {S}/>'
-             f'<path d="M10 2.5 H11.5 A2 2 0 0 1 13.5 4.5 V6.5 M12 5 L13.5 6.5 L15 5" fill="none" {S}/>'
-             f'<path d="M6 13.5 H4.5 A2 2 0 0 1 2.5 11.5 V9.5 M1 11 L2.5 9.5 L4 11" fill="none" {S}/>'),
- "FindInFiles": folder() + f'<path d="M12.6 12.6 L15 15" stroke="{INK}" stroke-width="2" stroke-linecap="round"/>' +
+             f'<path d="M10 2.5 H11.5 A2 2 0 0 1 13.5 4.5 V6.5 M12 5 L13.5 6.5 L15 5" fill="none" {SO}/>'
+             f'<path d="M6 13.5 H4.5 A2 2 0 0 1 2.5 11.5 V9.5 M1 11 L2.5 9.5 L4 11" fill="none" {SO}/>'),
+ "FindInFiles": folder() + f'<path d="M12.6 12.6 L15 15" stroke="{OUTER}" stroke-width="2" stroke-linecap="round"/>' +
                 f'<circle cx="10.5" cy="10.5" r="3" fill="{C["sky"]}" {S}/>',
  "Bookmark": f'<path d="M4 1.5 H12 V14.5 L8 11 L4 14.5 Z" fill="{C["teal"]}" {S}/>',
  "Source": (f'<rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="{C["lav"]}" {S}/>'
@@ -60,12 +64,12 @@ icons = {
                  f'<path d="M2 2.5 A1 1 0 0 1 3 2 H13 A1 1 0 0 1 14 3 V8 H2 Z" fill="{C["lav"]}"/>'
                  f'<rect x="1.5" y="1.5" width="13" height="13" rx="1.5" fill="none" {S}/>'
                  f'<path d="M1.5 8 H14.5" {S}/>' + lines(4, 11, [4.5]) + lines(4, 9, [6]) + lines(4, 11, [10.5]) + lines(4, 9, [12.5])),
- "Outline": (f'<rect x="1.5" y="2" width="3" height="3" rx="0.5" fill="{C["lav"]}" {S}/>' + lines(6.5, 14, [3.5]) +
-             f'<path d="M3 5 V11.5 H5" fill="none" {S}/>' + f'<path d="M3 8 H5" {S}/>' +
-             f'<circle cx="6.5" cy="8" r="1.2" fill="{C["peach"]}" {S}/>' + lines(9, 14, [8]) +
-             f'<circle cx="6.5" cy="11.5" r="1.2" fill="{C["peach"]}" {S}/>' + lines(9, 14, [11.5])),
+ "Outline": (f'<rect x="1.5" y="2" width="3" height="3" rx="0.5" fill="{C["lav"]}" {S}/>' + lines(6.5, 14, [3.5], True) +
+             f'<path d="M3 5 V11.5 H5" fill="none" {SO}/>' + f'<path d="M3 8 H5" {SO}/>' +
+             f'<circle cx="6.5" cy="8" r="1.2" fill="{C["peach"]}" {S}/>' + lines(9, 14, [8], True) +
+             f'<circle cx="6.5" cy="11.5" r="1.2" fill="{C["peach"]}" {S}/>' + lines(9, 14, [11.5], True)),
  "Format": (f'<rect x="1" y="2" width="2.5" height="12" rx="1" fill="{C["peach"]}" {S}/>' +
-            lines(5.5, 14.5, [3.5]) + lines(8, 14.5, [6.5]) + lines(8, 13, [9.5]) + lines(5.5, 11, [12.5])),
+            lines(5.5, 14.5, [3.5], True) + lines(8, 14.5, [6.5], True) + lines(8, 13, [9.5], True) + lines(5.5, 11, [12.5], True)),
  "Compare": (f'<rect x="1.5" y="1.5" width="5.5" height="13" rx="1" fill="{C["page"]}" {S}/>'
              f'<rect x="9" y="1.5" width="5.5" height="13" rx="1" fill="{C["page"]}" {S}/>'
              f'<rect x="2" y="6.5" width="4.5" height="2" fill="{C["peach"]}"/>'
@@ -75,12 +79,12 @@ icons = {
  "RecordActive": f'<circle cx="8" cy="8" r="5.5" fill="{C["red"]}" {S}/><circle cx="8" cy="8" r="2" fill="{INK}"/>',
  "Stop": f'<rect x="3" y="3" width="10" height="10" rx="2" fill="{C["pink"]}" {S}/>',
  "Play": f'<path d="M4.5 2.5 L13.5 8 L4.5 13.5 Z" fill="{C["mint"]}" {S}/>',
- "Repeat": (f'<path d="M13.5 8 A5.5 5.5 0 1 1 11.9 4.1" fill="none" stroke="{INK}" stroke-width="1.5" stroke-linecap="round"/>'
-            f'<path d="M12.6 1.6 L12.4 4.6 L9.4 4.4" fill="none" stroke="{INK}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+ "Repeat": (f'<path d="M13.5 8 A5.5 5.5 0 1 1 11.9 4.1" fill="none" stroke="{OUTER}" stroke-width="1.5" stroke-linecap="round"/>'
+            f'<path d="M12.6 1.6 L12.4 4.6 L9.4 4.4" fill="none" stroke="{OUTER}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
             f'<path d="M6.5 5.5 L10.5 8 L6.5 10.5 Z" fill="{C["mint"]}" {S}/>'),
  "Monitor": page(2.5, 1.5, 11, 13, "#EAF7F1") + f'<path d="M4 9 H6 L7.3 6 L9 12 L10.3 8.5 H12" fill="none" stroke="{INK}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>',
- "FollowTail": (lines(3, 13, [2.5]) + lines(3, 10, [4.5]) +
-                f'<path d="M8 6.5 V11 M5.5 8.8 L8 11.3 L10.5 8.8" fill="none" stroke="{INK}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+ "FollowTail": (lines(3, 13, [2.5], True) + lines(3, 10, [4.5], True) +
+                f'<path d="M8 6.5 V11 M5.5 8.8 L8 11.3 L10.5 8.8" fill="none" stroke="{OUTER}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
                 f'<rect x="2" y="12.5" width="12" height="2.5" rx="1" fill="{C["mint"]}" {S}/>'),
  "Help": (f'<circle cx="8" cy="8" r="6.5" fill="{C["sky"]}" {S}/>'
           f'<path d="M6 6.2 A2 2 0 1 1 8.9 8 C8.3 8.3 8 8.7 8 9.4 V9.8" fill="none" stroke="{INK}" stroke-width="1.4" stroke-linecap="round"/>'
@@ -91,8 +95,11 @@ os.makedirs(OUT_DIR, exist_ok=True); os.makedirs(SVG_DIR, exist_ok=True)
 for name, body in icons.items():
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">{body}</svg>'
     open(os.path.join(SVG_DIR, f"{name}.svg"), "w").write(svg + "\n")
+    # Dark-mode variant: light outlines and toned-down white so shapes stay visible on dark toolbars.
+    dark = svg.replace(OUTER, "#C9D4DC").replace(C["page"], "#DCE4E9")
     for s in sizes:
         cairosvg.svg2png(bytestring=svg.encode(), write_to=os.path.join(OUT_DIR, f"{name}-{s}.png"), output_width=s, output_height=s)
+        cairosvg.svg2png(bytestring=dark.encode(), write_to=os.path.join(OUT_DIR, f"{name}-dark-{s}.png"), output_width=s, output_height=s)
 print(len(icons), "icons")
 # preview sheet: each icon at 16, 24, 32 actual pixels plus 4x zoom of 16 on light toolbar background
 order = ["NewFile","Open","Save","SaveAll","Undo","Redo","Find","Replace","FindInFiles","Bookmark","Source","Preview","Split","SplitEditor","Outline","Format","Compare","Record","RecordActive","Stop","Play","Repeat","Monitor","FollowTail","Help"]
@@ -116,4 +123,8 @@ for i, name in enumerate(order):
     for s in (16, 24, 32):
         im = Image.open(os.path.join(OUT_DIR, f"{name}-{s}.png")); sheet.alpha_composite(im, (xx, y0 + 74 + (32 - s))); xx += s + 6
     d.text((x0 + 4, y0 + 116), labels[name], fill=(40, 50, 60, 255), font=font)
-sheet.save(PREVIEW)
+strip = Image.new("RGBA", (sheet.width, 70), (32, 34, 37, 255))
+for i, name in enumerate(order):
+    im = Image.open(os.path.join(OUT_DIR, f"{name}-dark-24.png")); strip.alpha_composite(im, (20 + i * 46, 23))
+out = Image.new("RGBA", (sheet.width, sheet.height + 70)); out.alpha_composite(sheet); out.alpha_composite(strip, (0, sheet.height))
+out.save(PREVIEW)

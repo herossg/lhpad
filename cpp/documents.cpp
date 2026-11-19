@@ -31,8 +31,8 @@ void App::applyEditorFont(HWND h) {
 }
 void App::configureEditor(HWND h) {
     sci(h, SCI_SETCODEPAGE, SC_CP_UTF8);
-    sci(h, SCI_STYLESETFORE, STYLE_DEFAULT, RGB(34, 42, 53));
-    sci(h, SCI_STYLESETBACK, STYLE_DEFAULT, RGB(253, 253, 252));
+    sci(h, SCI_STYLESETFORE, STYLE_DEFAULT, palette().editorText);
+    sci(h, SCI_STYLESETBACK, STYLE_DEFAULT, palette().editorBack);
     str(h, SCI_STYLESETFONT, editorFont, STYLE_DEFAULT);
     sci(h, SCI_STYLESETSIZEFRACTIONAL, STYLE_DEFAULT, editorFontSize);
     sci(h, SCI_STYLECLEARALL);
@@ -110,6 +110,7 @@ void App::configureEditor(HWND h) {
             : i == 1 ? RGB(255, 219, 219)
                      : RGB(255, 239, 191));
     }
+    Languages::theme(h);
     applyEditorFont(h);
 }
 void App::applyEditorSettings(HWND h) {
@@ -582,7 +583,8 @@ void App::backup() {
                     {"FindFolder", narrow(findFolder.wstring())},
                     {"FindFilter", narrow(findFilter)},
                     {"FindSubfolders", findSubfolders},
-                    {"OutlineVisible", outlineVisible}};
+                    {"OutlineVisible", outlineVisible},
+                    {"DarkMode", darkMode}};
     Json recent = Json::array();
     for (auto &p : recentFiles)
         recent.push_back(narrow(p.wstring()));
@@ -641,6 +643,9 @@ void App::restore() {
         findFilter = wide(session["FindFilter"].get<std::string>());
     findSubfolders = session.value("FindSubfolders", true);
     bool showOutlinePanel = session.value("OutlineVisible", false);
+    if (session.contains("DarkMode") && session["DarkMode"].is_boolean())
+        darkMode = session["DarkMode"].get<bool>();
+    setDarkMode(darkMode); // Tabs restored below are created with the right colours.
     recentFiles.clear();
     if (session.contains("RecentFiles") && session["RecentFiles"].is_array())
         for (auto &item : session["RecentFiles"])

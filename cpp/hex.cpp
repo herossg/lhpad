@@ -51,7 +51,7 @@ void App::hexChanged(Document &d) {
 void App::paintHex(Document &d, HDC dc) {
     RECT area{};
     GetClientRect(d.hexWindow, &area);
-    HBRUSH bg = CreateSolidBrush(RGB(253, 253, 252));
+    HBRUSH bg = CreateSolidBrush(palette().hexBack);
     FillRect(dc, &area, bg);
     DeleteObject(bg);
     if (!d.binary)
@@ -59,11 +59,11 @@ void App::paintHex(Document &d, HDC dc) {
     auto m = metrics(d.hexWindow, mono);
     auto old = SelectObject(dc, mono);
     SetBkMode(dc, TRANSPARENT);
-    SetTextColor(dc, RGB(43, 52, 63));
+    SetTextColor(dc, palette().hexText);
     auto text = [&](int x, int y, const std::wstring &s) {
         TextOutW(dc, x, y, s.c_str(), static_cast<int>(s.size()));
     };
-    HBRUSH header = CreateSolidBrush(RGB(233, 242, 239));
+    HBRUSH header = CreateSolidBrush(palette().hexHeader);
     RECT top{0, 0, area.right, m.header - 3};
     FillRect(dc, &top, header);
     DeleteObject(header);
@@ -86,7 +86,7 @@ void App::paintHex(Document &d, HDC dc) {
         int y = m.header + row * m.row;
         wchar_t addr[32];
         swprintf_s(addr, L"%016llX", static_cast<unsigned long long>(pos));
-        SetTextColor(dc, RGB(113, 128, 130));
+        SetTextColor(dc, palette().hexOffset);
         text(m.cell, y, addr);
         for (int col = 0; col < 16; col++) {
             Pos index = pos + col;
@@ -95,7 +95,7 @@ void App::paintHex(Document &d, HDC dc) {
             bool selected = index >= a && index < b, caret = index == d.caret && GetFocus() == d.hexWindow;
             int x = m.hexX + col * 3 * m.cell, ax = m.asciiX + col * m.cell;
             if (selected || caret) {
-                HBRUSH selection = CreateSolidBrush(selected ? RGB(192, 226, 220) : RGB(222, 237, 246));
+                HBRUSH selection = CreateSolidBrush(selected ? palette().hexSelection : palette().hexSelectionOther);
                 RECT r{x - 1, y - 1, x + 2 * m.cell + 1, y + m.row - 2},
                     c{ax - 1, y - 1, ax + m.cell, y + m.row - 2};
                 FillRect(dc, &r, selection);
@@ -110,7 +110,7 @@ void App::paintHex(Document &d, HDC dc) {
             auto v = bytes[at];
             wchar_t hex[4];
             swprintf_s(hex, L"%02X", v);
-            SetTextColor(dc, d.binary->changed(index)?RGB(185,92,29):RGB(34,42,53));
+            SetTextColor(dc, d.binary->changed(index) ? palette().hexChanged : palette().hexText);
             text(x, y, hex);
             std::wstring chr;
             if (v < 32 || v == 127)
@@ -122,11 +122,11 @@ void App::paintHex(Document &d, HDC dc) {
             text(ax, y, chr);
         }
     }
-    HBRUSH inspector = CreateSolidBrush(RGB(241, 246, 244));
+    HBRUSH inspector = CreateSolidBrush(palette().hexInspector);
     RECT ir{m.inspectorX, 0, area.right, area.bottom};
     FillRect(dc, &ir, inspector);
     DeleteObject(inspector);
-    SetTextColor(dc, RGB(43, 52, 63));
+    SetTextColor(dc, palette().hexText);
     int x = m.inspectorX + 12, y = 12;
     text(x, y, d.bigEndian ? L"☑ Big endian" : L"☐ Big endian");
     y += m.row * 2;
