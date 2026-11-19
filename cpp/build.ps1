@@ -14,6 +14,14 @@ New-Item -ItemType Directory -Force $taskOutput,(Join-Path $taskRoot 'artifacts/
 
 if($RebuildNative -or !(Test-Path (Join-Path $taskRoot 'native/Scintilla.dll'))) { & (Join-Path $taskRoot 'native/build-native.ps1') }
 
+# Reuse an MSVC x64 environment that is already loaded (a previous build in this window, or a Developer
+
+# PowerShell). Loading vcvars64.bat again would append to PATH until cmd rejects it as too long.
+
+$taskHaveMsvc=($env:VSCMD_ARG_TGT_ARCH -eq 'x64') -and [bool](Get-Command cl.exe -ErrorAction SilentlyContinue)
+
+if(!$taskHaveMsvc){
+
 $taskVsWhere=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 
 $taskVs=& $taskVsWhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
@@ -24,9 +32,11 @@ $taskVcVars=Join-Path $taskVs 'VC/Auxiliary/Build/vcvars64.bat'
 
 $taskEnvironment=& $env:ComSpec /d /c "call `"$taskVcVars`" >nul && set"
 
-if($LASTEXITCODE){throw 'MSVC environment initialization failed.'}
+if($LASTEXITCODE){throw 'MSVC environment initialization failed. If PATH became too long, open a new PowerShell window and build again.'}
 
 foreach($taskEntry in $taskEnvironment){if($taskEntry -match '^([^=]+)=(.*)$'){[Environment]::SetEnvironmentVariable($Matches[1],$Matches[2],'Process')}}
+
+}
 
 Push-Location $PSScriptRoot
 
