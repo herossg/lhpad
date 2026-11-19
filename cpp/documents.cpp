@@ -78,6 +78,11 @@ void App::configureEditor(HWND h) {
     sci(h, SCI_INDICSETALPHA, 9, 70);
     sci(h, SCI_INDICSETOUTLINEALPHA, 9, 200);
     sci(h, SCI_INDICSETUNDER, 9, 1);
+    sci(h, SCI_INDICSETSTYLE, markIndicator, INDIC_ROUNDBOX);
+    sci(h, SCI_INDICSETFORE, markIndicator, RGB(255, 183, 0));
+    sci(h, SCI_INDICSETALPHA, markIndicator, 90);
+    sci(h, SCI_INDICSETOUTLINEALPHA, markIndicator, 180);
+    sci(h, SCI_INDICSETUNDER, markIndicator, 1);
     sci(h, SCI_BRACEHIGHLIGHTINDICATOR, 1, 8);
     sci(h, SCI_BRACEBADLIGHTINDICATOR, 1, 9);
     applyEditorSettings(h);
@@ -557,7 +562,10 @@ void App::backup() {
                     {"EditorLineSpacing", editorLineSpacing},
                     {"TabWidth", tabWidth},
                     {"UseTabs", useTabs},
-                    {"BraceMatch", braceMatch}};
+                    {"BraceMatch", braceMatch},
+                    {"FindFolder", narrow(findFolder.wstring())},
+                    {"FindFilter", narrow(findFilter)},
+                    {"FindSubfolders", findSubfolders}};
     Json recent = Json::array();
     for (auto &p : recentFiles)
         recent.push_back(narrow(p.wstring()));
@@ -609,6 +617,12 @@ void App::restore() {
         tabWidth = std::clamp(session["TabWidth"].get<int>(), 1, 16);
     useTabs = session.value("UseTabs", false);
     braceMatch = session.value("BraceMatch", true);
+    if (session.contains("FindFolder") && session["FindFolder"].is_string())
+        findFolder = wide(session["FindFolder"].get<std::string>());
+    if (session.contains("FindFilter") && session["FindFilter"].is_string() &&
+        !session["FindFilter"].get<std::string>().empty())
+        findFilter = wide(session["FindFilter"].get<std::string>());
+    findSubfolders = session.value("FindSubfolders", true);
     recentFiles.clear();
     if (session.contains("RecentFiles") && session["RecentFiles"].is_array())
         for (auto &item : session["RecentFiles"])

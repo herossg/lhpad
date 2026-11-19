@@ -700,6 +700,54 @@ int runTests(App &a, bool full) {
             a.rebuildRecentMenu();
             a.select(indexOf(text.get()));
             sci(h, SCI_SETEOLMODE, SC_EOL_LF);
+            // 1.3 search: find all, results panel, mark all and find in files.
+            setText(*text, "alpha\nbeta alpha\n");
+            a.search = {"alpha", "", 0};
+            check(a.findAll() == 2 && a.hits.size() == 2 && a.hits[1].line == 1 && a.hits[1].column == 5 &&
+                      a.hits[1].text == L"beta alpha" && a.resultsVisible &&
+                      ListView_GetItemCount(a.resultsList) == 2 && IsWindowVisible(a.resultsList),
+                  "Find all lists each match with line, column and text in the results panel");
+            sci(h, SCI_GOTOPOS, 0);
+            a.goToHit(1);
+            check(sci(h, SCI_GETSELECTIONSTART) == 11 && sci(h, SCI_GETSELECTIONEND) == 16,
+                  "Activating a search result selects the match");
+            a.navigateHits(false);
+            check(sci(h, SCI_GETSELECTIONSTART) == 0 && a.hitIndex == 0, "Next result wraps to the first match");
+            check(a.markAll() == 2 && (sci(h, SCI_INDICATORALLONFOR, 12) & (1 << markIndicator)) &&
+                      !(sci(h, SCI_INDICATORALLONFOR, 8) & (1 << markIndicator)),
+                  "Mark all highlights only the matches");
+            a.clearMarks();
+            check(!(sci(h, SCI_INDICATORALLONFOR, 12) & (1 << markIndicator)), "Clear marks removes highlights");
+            check(all(*text) == "alpha\nbeta alpha\n" && !text->dirty(), "Find all and mark all never edit the text");
+            auto searchRoot = fixture / L"find-in-files";
+            disk::create_directories(searchRoot / L"sub");
+            disk::create_directories(searchRoot / L".git");
+            write(L"find-in-files\\a.txt", "needle\r\nx");
+            write(L"find-in-files\\sub\\b.cpp", "int needle = 1;");
+            write(L"find-in-files\\c.log", "needle");
+            write(L"find-in-files\\.git\\d.txt", "needle");
+            writeAtomic(searchRoot / L"e.txt", Bytes{'n', 'e', 'e', 'd', 'l', 'e', 0, 0, 1, 2, 0, 3});
+            SearchOptions fileSearch;
+            fileSearch.query = "needle";
+            check(a.findInFolder(searchRoot, L"*.txt;*.cpp", true, fileSearch) == 2 && a.hits.size() == 2 &&
+                      a.hits[0].source == L"a.txt" && a.hits[1].source == L"sub\\b.cpp" && a.hits[1].column == 4,
+                  "Find in files filters names, recurses, skips binary files and .git");
+            check(a.findInFolder(searchRoot, L"*.txt", false, fileSearch) == 1, "Find in files can stay in one folder");
+            auto savedFiles = a.recentFiles;
+            a.findInFolder(searchRoot, L"*.cpp", true, fileSearch);
+            auto docCount = a.docs.size();
+            a.goToHit(0);
+            check(a.docs.size() == docCount + 1 && a.current() && a.current()->path.filename() == L"b.cpp" &&
+                      sci(a.current()->editor, SCI_GETSELECTIONSTART) == 4 &&
+                      sci(a.current()->editor, SCI_GETSELECTIONEND) == 10,
+                  "Opening a find-in-files result opens the file at the match");
+            a.closeTab(a.active);
+            a.recentFiles = savedFiles;
+            a.rebuildRecentMenu();
+            a.showResults(false);
+            check(!IsWindowVisible(a.resultsList), "Results panel can be hidden");
+            a.search = {};
+            a.select(indexOf(text.get()));
         }
         setText(*text, "alpha beta alpha\nalpha");
         a.search = {"alpha", "가나다", 0};

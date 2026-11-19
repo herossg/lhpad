@@ -120,6 +120,15 @@ void App::buildMenu() {
     item(s, FindNext, L"다음 찾기\tF3");
     item(s, FindPrev, L"이전 찾기\tShift+F3");
     item(s, GoTo, L"줄 / 오프셋 이동…\tCtrl+G");
+    sep(s);
+    item(s, FindAll, L"모두 찾기 (검색 결과 창)");
+    item(s, FindInFiles, L"파일에서 찾기…\tCtrl+Shift+F");
+    item(s, MarkAll, L"찾은 항목 모두 표시");
+    item(s, ClearMarks, L"표시 지우기");
+    sep(s);
+    item(s, ResultsPanel, L"검색 결과 창");
+    item(s, ResultNext, L"다음 검색 결과\tF4");
+    item(s, ResultPrev, L"이전 검색 결과\tShift+F4");
     viewMenu = root(L"보기(&V)");
     item(viewMenu, Source, L"원문 보기");
     item(viewMenu, Preview, L"미리보기 전환\tCtrl+Shift+V");
@@ -433,6 +442,7 @@ void App::create(int show) {
         SetWindowSubclass(h, childProc, 1, reinterpret_cast<DWORD_PTR>(this));
     }
     buildToolbar();
+    createResultsPanel();
     DragAcceptFiles(window, TRUE);
     restorePlacement(show);
     ShowWindow(window, show);
@@ -471,8 +481,15 @@ void App::layout() {
     int width = client.right, height = client.bottom, bar = MulDiv(26, dpi, 96),
         statusHeight = MulDiv(26, dpi, 96);
     MoveWindow(toolbar, 0, 0, width, bar, TRUE);
-    MoveWindow(tabs, 0, bar, width, std::max(1, height - bar - statusHeight), TRUE);
+    int panel = resultsVisible ? std::clamp(height / 3, MulDiv(120, dpi, 96), MulDiv(260, dpi, 96)) : 0;
+    MoveWindow(tabs, 0, bar, width, std::max(1, height - bar - statusHeight - panel), TRUE);
     MoveWindow(status, 0, std::max(0, height - statusHeight), width, statusHeight, TRUE);
+    if (resultsList && resultsVisible) {
+        int top = std::max(bar, height - statusHeight - panel), label = MulDiv(24, dpi, 96);
+        MoveWindow(resultsLabel, 0, top, width, label, TRUE);
+        MoveWindow(resultsList, 0, top + label, width, std::max(1, panel - label), TRUE);
+        ListView_SetColumnWidth(resultsList, 2, LVSCW_AUTOSIZE_USEHEADER);
+    }
     int parts[] = {std::max(100, width - MulDiv(670, dpi, 96)), std::max(200, width - MulDiv(420, dpi, 96)),
                    std::max(250, width - MulDiv(270, dpi, 96)), std::max(300, width - MulDiv(150, dpi, 96)),
                    -1};
@@ -604,6 +621,7 @@ void App::update() {
         CheckMenuItem(menu, id, MF_BYCOMMAND | (b ? MF_CHECKED : MF_UNCHECKED));
     };
     check(AutoIndent, autoIndent);
+    check(ResultsPanel, resultsVisible);
     check(WhiteSpace, whiteSpace);
     check(EolVisible, eolVisible);
     check(ControlVisible, controlVisible);
@@ -805,6 +823,33 @@ void App::command(int id) {
         case Settings:
             settings();
             break;
+        case FindAll:
+            if (search.query.empty())
+                showFind(false);
+            else
+                findAll();
+            break;
+        case MarkAll:
+            if (search.query.empty())
+                showFind(false);
+            else
+                markAll();
+            break;
+        case ClearMarks:
+            clearMarks();
+            break;
+        case FindInFiles:
+            findInFiles();
+            break;
+        case ResultsPanel:
+            showResults(!resultsVisible);
+            break;
+        case ResultNext:
+            navigateHits(false);
+            break;
+        case ResultPrev:
+            navigateHits(true);
+            break;
         case Find:
             showFind(false);
             break;
@@ -976,7 +1021,7 @@ void App::command(int id) {
                 L"Ctrl+H: 찾기 / 바꾸기\nCtrl+Shift+R: 매크로 녹화\nCtrl+Shift+P: 매크로 실행\nCtrl+Alt+C: "
                 L"두 탭 비교\nCtrl+Alt+B: 현재 구간 접기\nCtrl+Shift+V: 미리보기\nCtrl+Alt+V: 분할 보기\n"
                 L"Ctrl+Q: 주석 넣기 / 빼기\nCtrl+B: 짝 괄호로 이동\nCtrl+Shift+U / Ctrl+U: 대문자 / 소문자\n"
-                L"Ctrl+Shift+T: 닫은 탭 다시 열기",
+                L"Ctrl+Shift+T: 닫은 탭 다시 열기\nCtrl+Shift+F: 파일에서 찾기\nF4 / Shift+F4: 다음 / 이전 검색 결과",
                 L"편집 단축키");
             break;
         }
@@ -1054,6 +1099,9 @@ bool App::shortcut(MSG &m) {
         case 'T':
             id = ReopenClosed;
             break;
+        case 'F':
+            id = FindInFiles;
+            break;
         case 'U':
             id = UpperCase;
             break;
@@ -1123,6 +1171,8 @@ bool App::shortcut(MSG &m) {
         id = Refresh;
     else if (key == VK_F7)
         id = shift ? ComparePrev : CompareNext;
+    else if (key == VK_F4 && !ctrl && !alt)
+        id = shift ? ResultPrev : ResultNext;
     if (id) {
         command(id);
         return true;
@@ -1236,6 +1286,24 @@ LRESULT App::notify(NMHDR *n) {
             DeleteObject(pen);
         }
         return CDRF_DODEFAULT;
+    }
+    if (resultsList && n->hwndFrom == resultsList) {
+        if (n->code == LVN_GETDISPINFOW) {
+            auto &item = reinterpret_cast<NMLVDISPINFOW *>(n)->item;
+            if ((item.mask & LVIF_TEXT) && item.pszText && item.cchTextMax > 0 && item.iItem >= 0 &&
+                item.iItem < static_cast<int>(hits.size())) {
+                auto &hit = hits[static_cast<size_t>(item.iItem)];
+                auto text = item.iSubItem == 0   ? hit.source
+                            : item.iSubItem == 1 ? std::to_wstring(hit.line + 1)
+                                                 : hit.text;
+                wcsncpy_s(item.pszText, item.cchTextMax, text.c_str(), _TRUNCATE);
+            }
+        } else if (n->code == LVN_ITEMACTIVATE) {
+            int index = reinterpret_cast<NMITEMACTIVATE *>(n)->iItem;
+            if (!busy && !playing)
+                guard([&] { goToHit(index); });
+        }
+        return 0;
     }
     if (n->hwndFrom == tabs && n->code == TCN_SELCHANGE) {
         select(TabCtrl_GetCurSel(tabs));

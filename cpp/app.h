@@ -81,6 +81,13 @@ enum Command {
     ToggleComment,
     BraceJump,
     Settings,
+    FindAll,
+    MarkAll,
+    ClearMarks,
+    FindInFiles,
+    ResultsPanel,
+    ResultNext,
+    ResultPrev,
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,
@@ -100,6 +107,16 @@ struct SearchOptions {
     int hexMode = 1;
     bool allTabs = false;
 };
+Pos findTarget(HWND h, const SearchOptions &options, Pos a, Pos b);
+struct SearchHit {
+    std::string docId; // Open tab that was searched; empty for find-in-files hits.
+    fs::path path;     // File on disk, when there is one.
+    std::wstring source;
+    Pos line = 0, column = 0, length = 0;
+    std::wstring text;
+};
+inline constexpr size_t hitLimit = 100000;
+inline constexpr int markIndicator = 10;
 struct Document {
     std::string id = guid(), name, language = "normal";
     fs::path path;
@@ -176,6 +193,14 @@ class App {
     std::vector<fs::path> recentFiles;
     std::vector<ClosedTab> closedTabs;
     std::string dragTab; // Id of the document whose tab is being dragged.
+    HWND resultsList = nullptr, resultsLabel = nullptr, searchBuffer = nullptr;
+    bool resultsVisible = false, searching = false;
+    std::vector<SearchHit> hits;
+    int hitIndex = -1;
+    std::wstring resultsTitle;
+    fs::path findFolder;
+    std::wstring findFilter = L"*.*";
+    bool findSubfolders = true;
     std::vector<MacroStep> recorded, lastMacro;
     std::vector<SavedMacroEntry> savedMacros;
     std::set<std::string> compareIds;
@@ -223,6 +248,17 @@ class App {
     void toggleComment();
     void highlightBrace(Document &d);
     void jumpBrace();
+    void createResultsPanel();
+    void showResults(bool visible);
+    void setResults(std::vector<SearchHit> found, std::wstring title);
+    size_t findAll();
+    size_t markAll();
+    void clearMarks();
+    void findInFiles();
+    size_t findInFolder(const fs::path &folder, const std::wstring &filter, bool subfolders,
+                        const SearchOptions &options);
+    void goToHit(int index);
+    void navigateHits(bool backwards);
     void select(int index);
     void open(const fs::path &path, std::optional<bool> binary = {}, std::optional<Encoding> encoding = {});
     void openPaths(const std::vector<std::string> &paths, bool activate = true);

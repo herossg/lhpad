@@ -175,6 +175,9 @@ LRESULT CALLBACK App::findProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         create(L"BUTTON", L"모두 바꾸기", 203, 350, 255, 98, 32, WS_TABSTOP);
         create(L"BUTTON", L"일치 개수", 204, 460, 255, 98, 32, WS_TABSTOP);
         create(L"BUTTON", L"중지", 205, 570, 255, 98, 32, WS_TABSTOP);
+        create(L"BUTTON", L"모두 찾기", 206, 20, 297, 98, 32, WS_TABSTOP);
+        create(L"BUTTON", L"모두 표시", 207, 130, 297, 98, 32, WS_TABSTOP);
+        create(L"BUTTON", L"파일에서 찾기…", 208, 240, 297, 208, 32, WS_TABSTOP);
         for (auto [id, flag] : {std::pair{102, SCFIND_MATCHCASE}, std::pair{103, SCFIND_WHOLEWORD},
                                 std::pair{104, SCFIND_REGEXP}})
             SendDlgItemMessageW(h, id, BM_SETCHECK, a->search.flags & flag ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -195,7 +198,7 @@ LRESULT CALLBACK App::findProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             a->searchAction(200);
             return 0;
         }
-        if (LOWORD(w) >= 200 && LOWORD(w) <= 204) {
+        if (LOWORD(w) >= 200 && LOWORD(w) <= 208 && LOWORD(w) != 205) {
             a->searchAction(LOWORD(w));
             return 0;
         }
@@ -211,7 +214,7 @@ LRESULT CALLBACK App::findProc(HWND h, UINT m, WPARAM w, LPARAM l) {
 }
 void App::showFind(bool replace) {
     if (!findWindow) {
-        int width = MulDiv(710, dpi, 96), height = MulDiv(350, dpi, 96);
+        int width = MulDiv(710, dpi, 96), height = MulDiv(392, dpi, 96);
         RECT r{};
         GetWindowRect(window, &r);
         findWindow = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_CONTROLPARENT, L"LHPad.Find",
@@ -245,6 +248,9 @@ void App::updateFind() {
     EnableWindow(GetDlgItem(findWindow, 201), !hex && !busy);
     EnableWindow(GetDlgItem(findWindow, 203), !hex && !busy);
     EnableWindow(GetDlgItem(findWindow, 205), busy);
+    EnableWindow(GetDlgItem(findWindow, 206), !hex && !busy);
+    EnableWindow(GetDlgItem(findWindow, 207), !hex && !busy);
+    EnableWindow(GetDlgItem(findWindow, 208), !busy && !playing);
     SetDlgItemTextW(findWindow, 300, wide(searchMessage).c_str());
 }
 Bytes App::searchBytes() const {
@@ -275,7 +281,7 @@ Bytes App::searchBytes() const {
     e.cp = search.hexMode == 2 ? 1200 : search.hexMode == 3 ? 20127 : 65001;
     return encode(search.query, e);
 }
-static Pos findTarget(HWND h, const SearchOptions &options, Pos a, Pos b) {
+Pos findTarget(HWND h, const SearchOptions &options, Pos a, Pos b) {
     sci(h, SCI_SETSTATUS, SC_STATUS_OK);
     // Notepad++'s bundled Boost.Regex build requires its empty-match/CRLF flags.
     uint32_t flags = static_cast<uint32_t>(options.flags);
@@ -552,6 +558,12 @@ void App::searchAction(int action) {
             countMatches(true);
         else if (action == 204)
             countMatches();
+        else if (action == 206)
+            findAll();
+        else if (action == 207)
+            markAll();
+        else if (action == 208)
+            findInFiles();
     } catch (const std::exception &e) {
         searchMessage = e.what();
     }
