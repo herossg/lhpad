@@ -12,10 +12,15 @@ static const std::vector<std::pair<int, std::wstring>> toolbarItems = {
     {Redo, L"다시 실행 (Ctrl+Y)"},
     {Find, L"찾기 (Ctrl+F)"},
     {Replace, L"바꾸기 (Ctrl+H)"},
+    {FindInFiles, L"파일에서 찾기 (Ctrl+Shift+F)"},
+    {BookmarkToggle, L"북마크 표시 / 해제 (Ctrl+F2) · 이동 F2 / Shift+F2"},
     {0, L""},
     {Source, L"원문 보기"},
     {Preview, L"미리보기 (Ctrl+Shift+V)"},
-    {Split, L"분할 보기 (Ctrl+Alt+V)"},
+    {Split, L"미리보기 좌우 분할 (Ctrl+Alt+V)"},
+    {SplitEditor, L"같은 문서 위아래 분할"},
+    {OutlinePanel, L"함수 목록"},
+    {0, L""},
     {Format, L"문서 정렬 (Ctrl+Alt+F)"},
     {Compare, L"두 탭 비교 (Ctrl+Alt+C)"},
     {0, L""},
@@ -247,16 +252,34 @@ static HBITMAP pngBitmap(const fs::path &path, int size) {
     return bitmap;
 }
 static HBITMAP buttonBitmap(int id, int size) {
+    // data/toolbar/<Name>-<px>.png are rasterised from tools/toolbar-icons/svg for each DPI size, so
+    // the closest size is used directly instead of scaling one large bitmap down (which blurs).
     static const std::map<int, std::wstring> artwork = {
-        {New, L"NewFile"}, {Open, L"Open"},       {Save, L"Save"},       {SaveAll, L"Save"},
-        {Find, L"Find"},   {Replace, L"Replace"}, {Source, L"Source"},   {Preview, L"Preview"},
-        {Split, L"Split"}, {Format, L"Format"},   {Compare, L"Compare"}, {MacroStop, L"Stop"},
-        {Play, L"Play"},   {Repeat, L"Repeat"},   {Monitor, L"Monitor"}, {FollowTail, L"FollowTail"},
+        {New, L"NewFile"},       {Open, L"Open"},           {Save, L"Save"},
+        {SaveAll, L"SaveAll"},   {Undo, L"Undo"},           {Redo, L"Redo"},
+        {Find, L"Find"},         {Replace, L"Replace"},     {FindInFiles, L"FindInFiles"},
+        {BookmarkToggle, L"Bookmark"}, {Source, L"Source"}, {Preview, L"Preview"},
+        {Split, L"Split"},       {SplitEditor, L"SplitEditor"}, {OutlinePanel, L"Outline"},
+        {Format, L"Format"},     {Compare, L"Compare"},     {Record, L"Record"},
+        {-Record, L"RecordActive"}, {MacroStop, L"Stop"},   {Play, L"Play"},
+        {Repeat, L"Repeat"},     {Monitor, L"Monitor"},     {FollowTail, L"FollowTail"},
         {Help, L"Help"}};
     if (auto it = artwork.find(id); it != artwork.end()) {
-        auto path = exeDir() / L"data" / L"toolbar" / (it->second + L".png");
-        if (disk::exists(path))
-            return pngBitmap(path, size);
+        auto folder = exeDir() / L"data" / L"toolbar";
+        fs::path best;
+        int bestSize = 0;
+        for (int candidate : {16, 20, 24, 32, 40, 48}) {
+            auto path = folder / (it->second + L"-" + std::to_wstring(candidate) + L".png");
+            if (!disk::exists(path))
+                continue;
+            // Smallest size that is at least as large as needed; otherwise the largest available.
+            if (!bestSize || (bestSize < size && candidate > bestSize) || (candidate >= size && candidate < bestSize)) {
+                best = path;
+                bestSize = candidate;
+            }
+        }
+        if (bestSize)
+            return pngBitmap(best, size);
     }
     Gdiplus::Bitmap bitmap(size, size, PixelFormat32bppARGB);
     Gdiplus::Graphics g(&bitmap);
@@ -666,12 +689,15 @@ void App::update() {
     check(FollowTail, d && d->follow);
     check(Scripts, d && d->scripts);
     check(Wrap, d && d->editor && sci(d->editor, SCI_GETWRAPMODE));
-    for (int id : {Source, Preview, Split, Monitor, FollowTail}) {
-        bool checked = d && (id == Source    ? d->viewMode == 0
-                             : id == Preview ? d->viewMode == 1
-                             : id == Split   ? d->viewMode == 2
-                             : id == Monitor ? d->monitor
-                                             : d->follow);
+    for (int id : {Source, Preview, Split, Monitor, FollowTail, SplitEditor, OutlinePanel}) {
+        bool checked = id == OutlinePanel ? outlineVisible
+                       : !d              ? false
+                       : id == Source    ? d->viewMode == 0
+                       : id == Preview   ? d->viewMode == 1
+                       : id == Split     ? d->viewMode == 2
+                       : id == Monitor   ? d->monitor
+                       : id == SplitEditor ? d->secondary != nullptr
+                                         : d->follow;
         if ((SendMessageW(toolbar, TB_ISBUTTONCHECKED, id, 0) != FALSE) != checked)
             SendMessageW(toolbar, TB_CHECKBUTTON, id, MAKELONG(checked, 0));
     }

@@ -72,3 +72,11 @@
 사용한 최종 프롬프트:
 
 > Edit the attached small Windows document-and-pencil icon to create the application icon for LitePad. Preserve its recognizable design: a white paper document with folded upper-right corner, fine grey writing lines and tiny grey bullets, overlaid by an orange/yellow pencil diagonally from lower left to upper right, and a square blue backing. Make only modest changes: replace the blue backing with a rich teal #007f73 backing, very subtly soften the outer corners, refine the paper and pencil edges for a clean sharp desktop app icon at small sizes. Do not add letters, logos, badges or other objects. Keep the composition and Windows flat icon style of the reference, not a photoreal or 3D redesign. Single centered square application icon, straight-on, high clarity, transparent background outside the teal square, no external shadow, no extra surrounding frame, no caption. Produce a high-resolution square PNG suitable for deriving multi-resolution Windows .ico sizes.
+
+## 1.4 툴바 아이콘 재작성
+
+툴바 아이콘 25개를 16×16 격자의 SVG로 다시 그렸다(`tools/toolbar-icons/svg`). 1px 회청색(#3B5160) 윤곽선과 기능별 파스텔 색 하나를 쓰고 배경 상자는 쓰지 않는다. 파일=크림/하늘, 검색=하늘, 보기=라벤더, 편집 도구=복숭아, 실행=민트, 북마크=청록, 녹화=하늘(대기)/빨강(녹화 중).
+
+`python tools/toolbar-icons/make.py`가 SVG를 16·20·24·32·40·48px PNG(`data/toolbar/<이름>-<px>.png`)로 만들고 미리보기 `docs/toolbar-icons-1.4-preview.png`를 갱신한다(cairosvg, Pillow 필요). 프로그램은 화면 배율에 맞는 가장 가까운 크기를 골라 쓰므로 하나의 큰 이미지를 줄일 때 생기는 흐림이 없다. 실행 취소·다시 실행·녹화도 같은 세트로 옮겼고, 모두 저장은 디스켓 두 장으로 저장과 구분한다.
+
+새 버튼: 파일에서 찾기, 북마크 표시/해제, 같은 문서 위아래 분할, 함수 목록. 분할과 함수 목록 버튼은 켜져 있을 때 눌린 상태로 표시된다.
