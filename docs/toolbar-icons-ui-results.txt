@@ -1,0 +1,9 @@
+PASS Idle editor leaves tab headers unchanged across timer ticks (invalidations=0)
+PASS Idle toolbar has no transient enable/disable changes (changes=0)
+PASS Editing still refreshes the document's unsaved tab indicator
+PASS Saved state still clears the unsaved tab indicator
+PASS Caret movement updates position without repainting tab headers or toggling toolbar controls
+PASS Recording still changes the button's status color
+PASS An unchanged monitored log leaves tab headers and toolbar state stable
+PASS Live log append updates content without flashing an unsaved tab icon
+ALL TESTS PASSED

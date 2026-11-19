@@ -1,0 +1,44 @@
+PASS dialog-find-text: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 다음 찾기:40, 이전 찾기:40, 일치 개수:40, 바꾸기:40, 모두 바꾸기:40, 중지:40)
+PASS dialog-find-text: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-find-text: dialog height follows the content without an unused bottom area
+PASS Find count remains visible in the compact text dialog
+PASS dialog-find-hex: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 다음 찾기:40, 이전 찾기:40, 일치 개수:40, 바꾸기:40, 모두 바꾸기:40, 중지:40)
+PASS dialog-find-hex: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-find-hex: dialog height follows the content without an unused bottom area
+PASS Hex search adds only the format and hint rows to the compact dialog
+PASS dialog-find-validation: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 다음 찾기:40, 이전 찾기:40, 일치 개수:40, 바꾸기:40, 모두 바꾸기:40, 중지:40)
+PASS dialog-find-validation: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-find-validation: dialog height follows the content without an unused bottom area
+PASS Long Hex validation feedback stays available after the layout change
+PASS dialog-go-to: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 확인:40)
+PASS dialog-go-to: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-go-to: dialog height follows the content without an unused bottom area
+PASS Input dialog retains initial value and Enter/Escape actions
+PASS dialog-column: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 적용:40)
+PASS dialog-column: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-column: dialog height follows the content without an unused bottom area
+PASS Column editor still switches between string and numeric entry
+PASS dialog-macro-repeat: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 실행:40)
+PASS dialog-macro-repeat: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-macro-repeat: dialog height follows the content without an unused bottom area
+PASS Macro repeat keeps EOF mode, count disabling and selected steps
+PASS dialog-macro-manager: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 닫기:40, 삭제:40, 이름 변경:40)
+PASS dialog-macro-manager: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-macro-manager: dialog height follows the content without an unused bottom area
+PASS dialog-about: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 확인:40)
+PASS dialog-about: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-about: dialog height follows the content without an unused bottom area
+PASS About dialog shows a large centered app icon above the information
+PASS dialog-confirm: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 아니요:40, 예:40)
+PASS dialog-confirm: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-confirm: dialog height follows the content without an unused bottom area
+PASS Confirmation dialog preserves its explicit Yes and Cancel results
+PASS dialog-long-message: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 확인:40)
+PASS dialog-long-message: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-long-message: dialog height follows the content without an unused bottom area
+PASS Lengthy messages use scrolling instead of an oversized window
+PASS Modal confirmation focuses its primary action and returns the selected Yes result
+PASS Modal confirmation focuses its primary action and returns the selected No result
+PASS Modal confirmation focuses its primary action and returns the selected Cancel result
+PASS Closing a Yes/No confirmation does not approve the action
+ALL TESTS PASSED

@@ -1,0 +1,492 @@
+[
+  {
+    "Name": "normal",
+    "Display": "Normal text",
+    "Lexer": "null"
+  },
+  {
+    "Name": "php",
+    "Display": "PHP",
+    "Lexer": "phpscript"
+  },
+  {
+    "Name": "c",
+    "Display": "C",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "cpp",
+    "Display": "C++",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "cs",
+    "Display": "C#",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "objc",
+    "Display": "Objective-C",
+    "Lexer": "objc"
+  },
+  {
+    "Name": "java",
+    "Display": "Java",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "rc",
+    "Display": "RC",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "html",
+    "Display": "HTML",
+    "Lexer": "hypertext"
+  },
+  {
+    "Name": "xml",
+    "Display": "XML",
+    "Lexer": "xml"
+  },
+  {
+    "Name": "makefile",
+    "Display": "Makefile",
+    "Lexer": "makefile"
+  },
+  {
+    "Name": "pascal",
+    "Display": "Pascal",
+    "Lexer": "pascal"
+  },
+  {
+    "Name": "batch",
+    "Display": "Batch",
+    "Lexer": "batch"
+  },
+  {
+    "Name": "ini",
+    "Display": "ini",
+    "Lexer": "props"
+  },
+  {
+    "Name": "nfo",
+    "Display": "NFO",
+    "Lexer": "null"
+  },
+  {
+    "Name": "udf",
+    "Display": "udf",
+    "Lexer": "user"
+  },
+  {
+    "Name": "asp",
+    "Display": "ASP",
+    "Lexer": "hypertext"
+  },
+  {
+    "Name": "sql",
+    "Display": "SQL",
+    "Lexer": "sql"
+  },
+  {
+    "Name": "vb",
+    "Display": "Visual Basic",
+    "Lexer": "vb"
+  },
+  {
+    "Name": "javascript",
+    "Display": "Embedded JS",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "css",
+    "Display": "CSS",
+    "Lexer": "css"
+  },
+  {
+    "Name": "perl",
+    "Display": "Perl",
+    "Lexer": "perl"
+  },
+  {
+    "Name": "python",
+    "Display": "Python",
+    "Lexer": "python"
+  },
+  {
+    "Name": "lua",
+    "Display": "Lua",
+    "Lexer": "lua"
+  },
+  {
+    "Name": "tex",
+    "Display": "TeX",
+    "Lexer": "tex"
+  },
+  {
+    "Name": "fortran",
+    "Display": "Fortran free form",
+    "Lexer": "fortran"
+  },
+  {
+    "Name": "bash",
+    "Display": "Shell",
+    "Lexer": "bash"
+  },
+  {
+    "Name": "actionscript",
+    "Display": "ActionScript",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "nsis",
+    "Display": "NSIS",
+    "Lexer": "nsis"
+  },
+  {
+    "Name": "tcl",
+    "Display": "TCL",
+    "Lexer": "tcl"
+  },
+  {
+    "Name": "lisp",
+    "Display": "Lisp",
+    "Lexer": "lisp"
+  },
+  {
+    "Name": "scheme",
+    "Display": "Scheme",
+    "Lexer": "lisp"
+  },
+  {
+    "Name": "asm",
+    "Display": "Assembly",
+    "Lexer": "asm"
+  },
+  {
+    "Name": "diff",
+    "Display": "Diff",
+    "Lexer": "diff"
+  },
+  {
+    "Name": "props",
+    "Display": "Properties file",
+    "Lexer": "props"
+  },
+  {
+    "Name": "postscript",
+    "Display": "PostScript",
+    "Lexer": "ps"
+  },
+  {
+    "Name": "ruby",
+    "Display": "Ruby",
+    "Lexer": "ruby"
+  },
+  {
+    "Name": "smalltalk",
+    "Display": "Smalltalk",
+    "Lexer": "smalltalk"
+  },
+  {
+    "Name": "vhdl",
+    "Display": "VHDL",
+    "Lexer": "vhdl"
+  },
+  {
+    "Name": "kix",
+    "Display": "KiXtart",
+    "Lexer": "kix"
+  },
+  {
+    "Name": "autoit",
+    "Display": "AutoIt",
+    "Lexer": "au3"
+  },
+  {
+    "Name": "caml",
+    "Display": "CAML",
+    "Lexer": "caml"
+  },
+  {
+    "Name": "ada",
+    "Display": "Ada",
+    "Lexer": "ada"
+  },
+  {
+    "Name": "verilog",
+    "Display": "Verilog",
+    "Lexer": "verilog"
+  },
+  {
+    "Name": "matlab",
+    "Display": "MATLAB",
+    "Lexer": "matlab"
+  },
+  {
+    "Name": "haskell",
+    "Display": "Haskell",
+    "Lexer": "haskell"
+  },
+  {
+    "Name": "inno",
+    "Display": "Inno Setup",
+    "Lexer": "inno"
+  },
+  {
+    "Name": "searchResult",
+    "Display": "Internal Search",
+    "Lexer": "searchResult"
+  },
+  {
+    "Name": "cmake",
+    "Display": "CMake",
+    "Lexer": "cmake"
+  },
+  {
+    "Name": "yaml",
+    "Display": "YAML",
+    "Lexer": "yaml"
+  },
+  {
+    "Name": "cobol",
+    "Display": "COBOL",
+    "Lexer": "COBOL"
+  },
+  {
+    "Name": "gui4cli",
+    "Display": "Gui4Cli",
+    "Lexer": "gui4cli"
+  },
+  {
+    "Name": "d",
+    "Display": "D",
+    "Lexer": "d"
+  },
+  {
+    "Name": "powershell",
+    "Display": "PowerShell",
+    "Lexer": "powershell"
+  },
+  {
+    "Name": "r",
+    "Display": "R",
+    "Lexer": "r"
+  },
+  {
+    "Name": "jsp",
+    "Display": "JSP",
+    "Lexer": "hypertext"
+  },
+  {
+    "Name": "coffeescript",
+    "Display": "CoffeeScript",
+    "Lexer": "coffeescript"
+  },
+  {
+    "Name": "json",
+    "Display": "json",
+    "Lexer": "json"
+  },
+  {
+    "Name": "javascript.js",
+    "Display": "JavaScript",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "fortran77",
+    "Display": "Fortran fixed form",
+    "Lexer": "f77"
+  },
+  {
+    "Name": "baanc",
+    "Display": "BaanC",
+    "Lexer": "baan"
+  },
+  {
+    "Name": "srec",
+    "Display": "S-Record",
+    "Lexer": "srec"
+  },
+  {
+    "Name": "ihex",
+    "Display": "Intel HEX",
+    "Lexer": "ihex"
+  },
+  {
+    "Name": "tehex",
+    "Display": "Tektronix extended HEX",
+    "Lexer": "tehex"
+  },
+  {
+    "Name": "swift",
+    "Display": "Swift",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "asn1",
+    "Display": "ASN.1",
+    "Lexer": "asn1"
+  },
+  {
+    "Name": "avs",
+    "Display": "AviSynth",
+    "Lexer": "avs"
+  },
+  {
+    "Name": "blitzbasic",
+    "Display": "BlitzBasic",
+    "Lexer": "blitzbasic"
+  },
+  {
+    "Name": "purebasic",
+    "Display": "PureBasic",
+    "Lexer": "purebasic"
+  },
+  {
+    "Name": "freebasic",
+    "Display": "FreeBasic",
+    "Lexer": "freebasic"
+  },
+  {
+    "Name": "csound",
+    "Display": "Csound",
+    "Lexer": "csound"
+  },
+  {
+    "Name": "erlang",
+    "Display": "Erlang",
+    "Lexer": "erlang"
+  },
+  {
+    "Name": "escript",
+    "Display": "ESCRIPT",
+    "Lexer": "escript"
+  },
+  {
+    "Name": "forth",
+    "Display": "Forth",
+    "Lexer": "forth"
+  },
+  {
+    "Name": "latex",
+    "Display": "LaTeX",
+    "Lexer": "latex"
+  },
+  {
+    "Name": "mmixal",
+    "Display": "MMIXAL",
+    "Lexer": "mmixal"
+  },
+  {
+    "Name": "nim",
+    "Display": "Nim",
+    "Lexer": "nimrod"
+  },
+  {
+    "Name": "nncrontab",
+    "Display": "Nncrontab",
+    "Lexer": "nncrontab"
+  },
+  {
+    "Name": "oscript",
+    "Display": "OScript",
+    "Lexer": "oscript"
+  },
+  {
+    "Name": "rebol",
+    "Display": "REBOL",
+    "Lexer": "rebol"
+  },
+  {
+    "Name": "registry",
+    "Display": "registry",
+    "Lexer": "registry"
+  },
+  {
+    "Name": "rust",
+    "Display": "Rust",
+    "Lexer": "rust"
+  },
+  {
+    "Name": "spice",
+    "Display": "Spice",
+    "Lexer": "spice"
+  },
+  {
+    "Name": "txt2tags",
+    "Display": "txt2tags",
+    "Lexer": "txt2tags"
+  },
+  {
+    "Name": "visualprolog",
+    "Display": "Visual Prolog",
+    "Lexer": "visualprolog"
+  },
+  {
+    "Name": "typescript",
+    "Display": "TypeScript",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "json5",
+    "Display": "json5",
+    "Lexer": "json"
+  },
+  {
+    "Name": "mssql",
+    "Display": "mssql",
+    "Lexer": "mssql"
+  },
+  {
+    "Name": "gdscript",
+    "Display": "GDScript",
+    "Lexer": "gdscript"
+  },
+  {
+    "Name": "hollywood",
+    "Display": "Hollywood",
+    "Lexer": "hollywood"
+  },
+  {
+    "Name": "go",
+    "Display": "Go",
+    "Lexer": "cpp"
+  },
+  {
+    "Name": "raku",
+    "Display": "Raku",
+    "Lexer": "raku"
+  },
+  {
+    "Name": "toml",
+    "Display": "TOML",
+    "Lexer": "toml"
+  },
+  {
+    "Name": "sas",
+    "Display": "SAS",
+    "Lexer": "sas"
+  },
+  {
+    "Name": "errorlist",
+    "Display": "ErrorList",
+    "Lexer": "errorlist"
+  },
+  {
+    "Name": "escseq",
+    "Display": "EscapeSequence (ANSI)",
+    "Lexer": "escseq"
+  },
+  {
+    "Name": "fcST",
+    "Display": "Structured Text",
+    "Lexer": "fcST"
+  },
+  {
+    "Name": "ext",
+    "Display": "External",
+    "Lexer": "null"
+  }
+]

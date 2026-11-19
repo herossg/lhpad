@@ -1,0 +1,4 @@
+LIBRARY LHPadShell
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE

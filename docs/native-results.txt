@@ -1,0 +1,138 @@
+PASS Process runs without .NET CLR
+PASS Native language catalog retains Notepad++ mappings
+PASS Encoding roundtrip UTF8
+PASS Native file stream and BOM UTF8
+PASS Encoding roundtrip UTF8 BOM
+PASS Native file stream and BOM UTF8 BOM
+PASS Encoding roundtrip UTF16LE
+PASS Native file stream and BOM UTF16LE
+PASS Encoding roundtrip UTF16BE
+PASS Native file stream and BOM UTF16BE
+PASS Encoding roundtrip UTF32LE
+PASS Native file stream and BOM UTF32LE
+PASS Encoding roundtrip UTF32BE
+PASS Native file stream and BOM UTF32BE
+PASS Encoding roundtrip CP949
+PASS Native file stream and BOM CP949
+PASS Encoding roundtrip EUC-KR
+PASS Native file stream and BOM EUC-KR
+PASS Unrepresentable text rejects lossy encoding
+PASS Multibyte character across streaming boundary UTF8
+PASS Multibyte character across streaming boundary UTF16
+PASS Multibyte character across streaming boundary CP949
+PASS Multibyte character across streaming boundary GB18030
+PASS Failed encoding save preserves original file atomically
+PASS Unicode file read and atomic save work beyond MAX_PATH without OS policy changes
+PASS Recovery JSON and its atomic backup work beyond MAX_PATH
+PASS Long Unicode paths retain file identity and size metadata
+PASS Native edit notification sets dirty tab state
+PASS Undo preserves Korean UTF8
+PASS Auto-indent literal tabs EOL 0
+PASS Newline and indentation undo as one action
+PASS Auto-indent literal tabs EOL 2
+PASS Newline and indentation undo as one action
+PASS Auto-indent literal tabs EOL 1
+PASS Newline and indentation undo as one action
+PASS Auto-indent preference disables continuation
+PASS Multi-caret Enter preserves each original indentation
+PASS Multi-caret auto-indent grouped undo
+PASS Count matches preserves cursor and selection
+PASS Unicode replace-all
+PASS Replace-all grouped undo
+PASS Boost regex captures and replacement
+PASS Zero-width replace-all terminates
+PASS Invalid regex rejected with validation
+PASS JSON native lexer applies syntax colors
+PASS Native code folding collapses nested blocks
+PASS Native code folding expands all levels
+PASS Extension auto-detection
+PASS JSON formatting semantic roundtrip
+PASS XML formatting preserves declaration
+PASS XML formatter prohibits external entity DTDs
+PASS SQL formatting preserves strings comments and tokens
+PASS HTML formatting preserves inline spaces and raw scripts
+PASS Native Markdown headings tables tasks and fenced code
+PASS Binary content detection
+PASS Hex overwrite piece table
+PASS Hex undo returns clean original
+PASS Hex streaming search sees dirty bytes
+PASS Hex atomic file save
+PASS Hex insertion shifts original bytes
+PASS Hex deletion updates 64-bit length
+PASS SHA256 native BCrypt known vector
+PASS Actual Hex window nibble editing
+PASS Native SCN_MACRORECORD captures edits
+PASS Native Unicode macro repeat
+PASS Whole macro repeat grouped undo
+PASS C# compatible macro JSON save/reload
+PASS Macro loader rejects pointer commands
+PASS Newline macro captures one semantic step
+PASS Line diff coverage invariant 0
+PASS Line diff coverage invariant 1
+PASS Line diff coverage invariant 2
+PASS Line diff coverage invariant 3
+PASS Line diff coverage invariant 4
+PASS Line diff coverage invariant 5
+PASS Line diff coverage invariant 6
+PASS Line diff coverage invariant 7
+PASS Line diff coverage invariant 8
+PASS Line diff coverage invariant 9
+PASS Line diff coverage invariant 10
+PASS Line diff coverage invariant 11
+PASS Line diff coverage invariant 12
+PASS Line diff coverage invariant 13
+PASS Line diff coverage invariant 14
+PASS Line diff coverage invariant 15
+PASS Line diff coverage invariant 16
+PASS Line diff coverage invariant 17
+PASS Line diff coverage invariant 18
+PASS Line diff coverage invariant 19
+PASS Line diff coverage invariant 20
+PASS Line diff coverage invariant 21
+PASS Line diff coverage invariant 22
+PASS Line diff coverage invariant 23
+PASS Line diff coverage invariant 24
+PASS Line diff coverage invariant 25
+PASS Line diff coverage invariant 26
+PASS Line diff coverage invariant 27
+PASS Line diff coverage invariant 28
+PASS Line diff coverage invariant 29
+PASS Log tail appends Korean while editor stays read-only
+PASS Log rotation resets replaced file
+PASS Log stop restores normal editing
+PASS Shell file drop opens Korean path with spaces from tab area
+PASS Native editor file drop handles multiple paths and deduplicates tabs
+PASS Running-instance WM_COPYDATA accepts UTF8 file list
+PASS Running-instance opens delivered file in new tab
+PASS Actual OLE CF_HDROP opens multiple Unicode files over native Scintilla
+PASS Second native process starts with quoted profile and Unicode file path
+PASS Second process forwards file to existing instance and exits successfully
+PASS Native comparison creates aligned read-only snapshot views
+PASS Comparison cannot alter original editable tabs
+PASS 256 MiB text loads in large-document mode
+PASS UI timer continues while loading 256 MiB text with long lines
+METRIC largeLoadMs=2547 uiTicks=106
+PASS 256 MiB native text save preserves SHA256
+PASS 3 GiB Hex edit uses 64-bit offsets without whole-file loading
+PASS Real UI timer cancels 3 GiB native Hex search and restores the application busy state
+PASS Native WebView2 COM preview initializes
+PASS WebView2 renders actual native Markdown HTML (heading=LitePad C++)
+PASS Actual Markdown preview renders pipe table rows
+PASS Native preview renders unsaved editor changes
+PASS Native WebView2 renders actual HTML source
+PASS HTML preview resolves relative CSS through confined local resources
+PASS Preview resolves Korean relative image filenames with URL-encoded spaces
+PASS Document JavaScript stays disabled by default
+PASS Explicit per-tab HTML script option enables execution
+PASS Native SVG preview renders the vector document
+PASS Session manifest and unsaved snapshot retain C# compatible schema
+PASS Native window placement retains existing schema
+PASS Native About dialog keeps a 128px typewriter and correctly sized unclipped button
+PASS Native startup imports C# unsaved UTF8 snapshot while retaining original file encoding
+PASS C# selections wrap zoom and editor preferences migrate intact
+PASS Native startup imports C# base64 macro strings and saved macro list
+PASS Migration preserves original manifest backup and never overwrites saved source file
+PASS Off-screen oversized C# window settings are clamped to the current monitor
+PASS Recovered unsaved state survives the next native session backup
+PASS Failed staged reload preserves existing unsaved text and dirty state
+ALL NATIVE TESTS PASSED

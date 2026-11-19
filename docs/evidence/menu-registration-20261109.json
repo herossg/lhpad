@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-11-09T20:52:15.2223245+09:00",
+  "scope": "Explorer registration only; no menu commands or application functions invoked",
+  "checks": [
+    {
+      "name": "01-pad-migrated",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 1,
+      "lhzipPackages": 0
+    },
+    {
+      "name": "02-pad-repeated",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 1,
+      "lhzipPackages": 0
+    },
+    {
+      "name": "03-both-exclusive",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 1,
+      "lhzipPackages": 1
+    },
+    {
+      "name": "04-zip-repeated",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 1,
+      "lhzipPackages": 1
+    },
+    {
+      "name": "05-zip-removed-twice",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 1,
+      "lhzipPackages": 0
+    },
+    {
+      "name": "06-all-removed-twice",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 0,
+      "lhzipPackages": 0
+    },
+    {
+      "name": "07-final-pad-only",
+      "passed": true,
+      "classicMenuProviders": 0,
+      "lhpadPackages": 1,
+      "lhzipPackages": 0
+    }
+  ],
+  "failure": null,
+  "finalIntendedState": "LHPad enabled, LHZip disabled",
+  "signed_release_exe_sha256": {
+    "LHZip": "40bfe28ad58f356a7cd9209707cc7b4deb43017482c11de140a563db0c2816ea",
+    "LHPad": "f67922773ac24a411db83cc4263b2d6a112834e695f9b5442cdb527bbd72990c"
+  }
+}

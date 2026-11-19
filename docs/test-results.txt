@@ -1,0 +1,687 @@
+PASS Native edit notifications and dirty tracking
+PASS UTF-8 undo preserves Korean
+PASS Unicode replace all
+PASS Replace all is one undo action
+PASS Notepad++ Boost regex capture replacement
+PASS Zero width regex replacement terminates (count=2, text=>a\n>b)
+PASS Native multiple selection API available
+PASS Notepad++ language catalog imported
+PASS Lexilla language engines instantiate
+PASS JSON lexer applies distinct syntax styles
+PASS SQL keywords styled from Notepad++ data
+PASS JSON formatting semantic roundtrip
+PASS XML declaration preserved
+PASS XML formatting blocks external entity resolution
+PASS HTML mixed text and raw script preserved
+PASS HTML whitespace between inline elements preserved
+PASS SQL strings identifiers and nested comments preserved
+PASS SQL Unicode string prefix remains attached
+PASS Text detection UTF-8
+PASS Encoding save/reload UTF-8
+PASS Text detection UTF8 BOM
+PASS Encoding save/reload UTF8 BOM
+PASS Text detection UTF16 LE
+PASS Encoding save/reload UTF16 LE
+PASS Text detection UTF16 BE
+PASS Encoding save/reload UTF16 BE
+PASS Text detection CP949
+PASS Encoding save/reload CP949
+PASS Text detection EUC-KR
+PASS Encoding save/reload EUC-KR
+PASS Unrepresentable characters reject lossy save
+PASS Line diff aligns inserted and removed lines
+PASS Diff coverage invariant 0
+PASS Diff coverage invariant 1
+PASS Diff coverage invariant 2
+PASS Diff coverage invariant 3
+PASS Diff coverage invariant 4
+PASS Diff coverage invariant 5
+PASS Diff coverage invariant 6
+PASS Diff coverage invariant 7
+PASS Diff coverage invariant 8
+PASS Diff coverage invariant 9
+PASS Diff coverage invariant 10
+PASS Diff coverage invariant 11
+PASS Diff coverage invariant 12
+PASS Diff coverage invariant 13
+PASS Diff coverage invariant 14
+PASS Diff coverage invariant 15
+PASS Diff coverage invariant 16
+PASS Diff coverage invariant 17
+PASS Diff coverage invariant 18
+PASS Diff coverage invariant 19
+PASS Diff coverage invariant 20
+PASS Diff coverage invariant 21
+PASS Diff coverage invariant 22
+PASS Diff coverage invariant 23
+PASS Diff coverage invariant 24
+PASS Diff coverage invariant 25
+PASS Diff coverage invariant 26
+PASS Diff coverage invariant 27
+PASS Diff coverage invariant 28
+PASS Diff coverage invariant 29
+PASS Diff coverage invariant 30
+PASS Diff coverage invariant 31
+PASS Diff coverage invariant 32
+PASS Diff coverage invariant 33
+PASS Diff coverage invariant 34
+PASS Diff coverage invariant 35
+PASS Diff coverage invariant 36
+PASS Diff coverage invariant 37
+PASS Diff coverage invariant 38
+PASS Diff coverage invariant 39
+PASS Diff coverage invariant 40
+PASS Diff coverage invariant 41
+PASS Diff coverage invariant 42
+PASS Diff coverage invariant 43
+PASS Diff coverage invariant 44
+PASS Diff coverage invariant 45
+PASS Diff coverage invariant 46
+PASS Diff coverage invariant 47
+PASS Diff coverage invariant 48
+PASS Diff coverage invariant 49
+PASS Diff coverage invariant 50
+PASS Diff coverage invariant 51
+PASS Diff coverage invariant 52
+PASS Diff coverage invariant 53
+PASS Diff coverage invariant 54
+PASS Diff coverage invariant 55
+PASS Diff coverage invariant 56
+PASS Diff coverage invariant 57
+PASS Diff coverage invariant 58
+PASS Diff coverage invariant 59
+PASS Diff coverage invariant 60
+PASS Diff coverage invariant 61
+PASS Diff coverage invariant 62
+PASS Diff coverage invariant 63
+PASS Diff coverage invariant 64
+PASS Diff coverage invariant 65
+PASS Diff coverage invariant 66
+PASS Diff coverage invariant 67
+PASS Diff coverage invariant 68
+PASS Diff coverage invariant 69
+PASS Diff coverage invariant 70
+PASS Diff coverage invariant 71
+PASS Diff coverage invariant 72
+PASS Diff coverage invariant 73
+PASS Diff coverage invariant 74
+PASS Diff coverage invariant 75
+PASS Diff coverage invariant 76
+PASS Diff coverage invariant 77
+PASS Diff coverage invariant 78
+PASS Diff coverage invariant 79
+PASS Diff coverage invariant 80
+PASS Diff coverage invariant 81
+PASS Diff coverage invariant 82
+PASS Diff coverage invariant 83
+PASS Diff coverage invariant 84
+PASS Diff coverage invariant 85
+PASS Diff coverage invariant 86
+PASS Diff coverage invariant 87
+PASS Diff coverage invariant 88
+PASS Diff coverage invariant 89
+PASS Diff coverage invariant 90
+PASS Diff coverage invariant 91
+PASS Diff coverage invariant 92
+PASS Diff coverage invariant 93
+PASS Diff coverage invariant 94
+PASS Diff coverage invariant 95
+PASS Diff coverage invariant 96
+PASS Diff coverage invariant 97
+PASS Diff coverage invariant 98
+PASS Diff coverage invariant 99
+PASS Binary automatic detection
+PASS Hex nibble overwrite overlay
+PASS Hex undo returns original bytes
+PASS Hex redo
+PASS Hex streaming search includes dirty bytes
+PASS Hex save keeps source unchanged
+PASS 3 GiB binary file uses 64-bit offsets
+PASS 3 GiB binary opens without loading whole file
+PASS Unsaved tab committed to session manifest
+PASS Unsaved snapshot exact Unicode recovery
+PASS Corrupt session manifest falls back to prior generation
+PASS 256 MiB text loaded with native 64-bit document
+PASS UI remains responsive during large text loading
+PASS 256 MiB text save SHA-256 matches input
+METRIC largeLoadMs=4558 uiTicks=221 workingSetMiB=621
+PASS Hex piece table insert/delete invariant 0
+PASS Hex piece table insert/delete invariant 1
+PASS Hex piece table insert/delete invariant 2
+PASS Hex piece table insert/delete invariant 3
+PASS Hex piece table insert/delete invariant 4
+PASS Hex piece table insert/delete invariant 5
+PASS Hex piece table insert/delete invariant 6
+PASS Hex piece table insert/delete invariant 7
+PASS Hex piece table insert/delete invariant 8
+PASS Hex piece table insert/delete invariant 9
+PASS Hex piece table insert/delete invariant 10
+PASS Hex piece table insert/delete invariant 11
+PASS Hex piece table insert/delete invariant 12
+PASS Hex piece table insert/delete invariant 13
+PASS Hex piece table insert/delete invariant 14
+PASS Hex piece table insert/delete invariant 15
+PASS Hex piece table insert/delete invariant 16
+PASS Hex piece table insert/delete invariant 17
+PASS Hex piece table insert/delete invariant 18
+PASS Hex piece table insert/delete invariant 19
+PASS Hex piece table insert/delete invariant 20
+PASS Hex piece table insert/delete invariant 21
+PASS Hex piece table insert/delete invariant 22
+PASS Hex piece table insert/delete invariant 23
+PASS Hex piece table insert/delete invariant 24
+PASS Hex piece table insert/delete invariant 25
+PASS Hex piece table insert/delete invariant 26
+PASS Hex piece table insert/delete invariant 27
+PASS Hex piece table insert/delete invariant 28
+PASS Hex piece table insert/delete invariant 29
+PASS Hex piece table insert/delete invariant 30
+PASS Hex piece table insert/delete invariant 31
+PASS Hex piece table insert/delete invariant 32
+PASS Hex piece table insert/delete invariant 33
+PASS Hex piece table insert/delete invariant 34
+PASS Hex piece table insert/delete invariant 35
+PASS Hex piece table insert/delete invariant 36
+PASS Hex piece table insert/delete invariant 37
+PASS Hex piece table insert/delete invariant 38
+PASS Hex piece table insert/delete invariant 39
+PASS Hex piece table insert/delete invariant 40
+PASS Hex piece table insert/delete invariant 41
+PASS Hex piece table insert/delete invariant 42
+PASS Hex piece table insert/delete invariant 43
+PASS Hex piece table insert/delete invariant 44
+PASS Hex piece table insert/delete invariant 45
+PASS Hex piece table insert/delete invariant 46
+PASS Hex piece table insert/delete invariant 47
+PASS Hex piece table insert/delete invariant 48
+PASS Hex piece table insert/delete invariant 49
+PASS Hex piece table insert/delete invariant 50
+PASS Hex piece table insert/delete invariant 51
+PASS Hex piece table insert/delete invariant 52
+PASS Hex piece table insert/delete invariant 53
+PASS Hex piece table insert/delete invariant 54
+PASS Hex piece table insert/delete invariant 55
+PASS Hex piece table insert/delete invariant 56
+PASS Hex piece table insert/delete invariant 57
+PASS Hex piece table insert/delete invariant 58
+PASS Hex piece table insert/delete invariant 59
+PASS Hex piece table insert/delete invariant 60
+PASS Hex piece table insert/delete invariant 61
+PASS Hex piece table insert/delete invariant 62
+PASS Hex piece table insert/delete invariant 63
+PASS Hex piece table insert/delete invariant 64
+PASS Hex piece table insert/delete invariant 65
+PASS Hex piece table insert/delete invariant 66
+PASS Hex piece table insert/delete invariant 67
+PASS Hex piece table insert/delete invariant 68
+PASS Hex piece table insert/delete invariant 69
+PASS Hex piece table insert/delete invariant 70
+PASS Hex piece table insert/delete invariant 71
+PASS Hex piece table insert/delete invariant 72
+PASS Hex piece table insert/delete invariant 73
+PASS Hex piece table insert/delete invariant 74
+PASS Hex piece table insert/delete invariant 75
+PASS Hex piece table insert/delete invariant 76
+PASS Hex piece table insert/delete invariant 77
+PASS Hex piece table insert/delete invariant 78
+PASS Hex piece table insert/delete invariant 79
+PASS Hex piece table insert/delete invariant 80
+PASS Hex piece table insert/delete invariant 81
+PASS Hex piece table insert/delete invariant 82
+PASS Hex piece table insert/delete invariant 83
+PASS Hex piece table insert/delete invariant 84
+PASS Hex piece table insert/delete invariant 85
+PASS Hex piece table insert/delete invariant 86
+PASS Hex piece table insert/delete invariant 87
+PASS Hex piece table insert/delete invariant 88
+PASS Hex piece table insert/delete invariant 89
+PASS Hex piece table insert/delete invariant 90
+PASS Hex piece table insert/delete invariant 91
+PASS Hex piece table insert/delete invariant 92
+PASS Hex piece table insert/delete invariant 93
+PASS Hex piece table insert/delete invariant 94
+PASS Hex piece table insert/delete invariant 95
+PASS Hex piece table insert/delete invariant 96
+PASS Hex piece table insert/delete invariant 97
+PASS Hex piece table insert/delete invariant 98
+PASS Hex piece table insert/delete invariant 99
+PASS Hex piece table insert/delete invariant 100
+PASS Hex piece table insert/delete invariant 101
+PASS Hex piece table insert/delete invariant 102
+PASS Hex piece table insert/delete invariant 103
+PASS Hex piece table insert/delete invariant 104
+PASS Hex piece table insert/delete invariant 105
+PASS Hex piece table insert/delete invariant 106
+PASS Hex piece table insert/delete invariant 107
+PASS Hex piece table insert/delete invariant 108
+PASS Hex piece table insert/delete invariant 109
+PASS Hex piece table insert/delete invariant 110
+PASS Hex piece table insert/delete invariant 111
+PASS Hex piece table insert/delete invariant 112
+PASS Hex piece table insert/delete invariant 113
+PASS Hex piece table insert/delete invariant 114
+PASS Hex piece table insert/delete invariant 115
+PASS Hex piece table insert/delete invariant 116
+PASS Hex piece table insert/delete invariant 117
+PASS Hex piece table insert/delete invariant 118
+PASS Hex piece table insert/delete invariant 119
+PASS Hex inserted/deleted file streaming save
+ENCODING UTF-8 supported
+ENCODING UTF-8 BOM supported
+ENCODING UTF-16 LE BOM supported
+ENCODING UTF-16 BE BOM supported
+ENCODING UTF-16 LE supported
+ENCODING UTF-16 BE supported
+ENCODING UTF-32 LE BOM supported
+ENCODING UTF-32 BE BOM supported
+ENCODING ANSI (시스템) supported
+ENCODING 한국어 Windows-949 (CP949) supported
+ENCODING 한국어 EUC-KR supported
+ENCODING 한국어 ISO-2022-KR supported
+ENCODING 일본어 Shift-JIS supported
+ENCODING 일본어 EUC-JP supported
+ENCODING 일본어 ISO-2022-JP supported
+ENCODING 중국어 GB2312 / GBK supported
+ENCODING 중국어 GB18030 supported
+ENCODING 중국어 Big5 supported
+ENCODING 중국어 ISO-2022-CN supported
+ENCODING 아랍어 Windows-1256 supported
+ENCODING 발트 Windows-1257 supported
+ENCODING 중부 유럽 Windows-1250 supported
+ENCODING 키릴 Windows-1251 supported
+ENCODING 서유럽 Windows-1252 supported
+ENCODING 그리스 Windows-1253 supported
+ENCODING 터키 Windows-1254 supported
+ENCODING 히브리 Windows-1255 supported
+ENCODING 베트남 Windows-1258 supported
+ENCODING 태국 TIS-620 supported
+ENCODING OEM US 437 supported
+ENCODING OEM Latin 850 supported
+ENCODING OEM Multilingual 852 supported
+ENCODING OEM Cyrillic 855 supported
+ENCODING OEM Turkish 857 supported
+ENCODING OEM Russian 866 supported
+ENCODING KOI8-R supported
+ENCODING KOI8-U supported
+ENCODING Macintosh Roman supported
+ENCODING Macintosh Cyrillic supported
+ENCODING ISO-8859-1 supported
+ENCODING ISO-8859-2 supported
+ENCODING ISO-8859-3 supported
+ENCODING ISO-8859-4 supported
+ENCODING ISO-8859-5 supported
+ENCODING ISO-8859-6 supported
+ENCODING ISO-8859-7 supported
+ENCODING ISO-8859-8 supported
+ENCODING ISO-8859-9 supported
+ENCODING ISO-8859-13 supported
+ENCODING ISO-8859-15 supported
+ENCODING ISO-8859-14 (Celtic) supported
+ENCODING OEM DOS 720 supported
+ENCODING OEM DOS 737 supported
+ENCODING OEM DOS 775 supported
+ENCODING OEM DOS 858 supported
+ENCODING OEM DOS 860 supported
+ENCODING OEM DOS 861 supported
+ENCODING OEM DOS 862 supported
+ENCODING OEM DOS 863 supported
+ENCODING OEM DOS 865 supported
+ENCODING OEM DOS 869 supported
+PASS ISO-8859-14 complete byte roundtrip
+PASS Actual window close/reopen restores tab count
+PASS Actual restart restores unsaved text and language
+PASS Actual restart restores multiple cursors
+PASS Actual restart restores dirty inserted binary and active tab
+PASS Session recovery never overwrites original binary
+PASS Tests completed without opening or modifying user documents
+PASS Preview detects Markdown HTML and SVG extensions
+PASS Plain text stays in lightweight source mode
+PASS Markdown extension selects the Markdown syntax lexer
+PASS Opening Markdown does not start WebView2
+PASS WebView2 Markdown render: 
+PASS Markdown heading is rendered rather than shown as source
+PASS Markdown emphasis renders
+PASS Markdown pipe table renders
+PASS Markdown task list renders
+PASS Markdown fenced HTML remains literal code
+PASS Markdown relative image with Korean name and space resolves
+PASS Preview does not automatically execute document JavaScript
+PASS Debounced preview reflects unsaved edits
+PASS Live preview never saves or changes the source file
+PASS Full preview mode switches without changing source
+PASS Large document preview is bounded without disabling source editing
+PASS WebView2 HTML render: 
+PASS HTML document body renders
+PASS HTML relative external stylesheet resolves
+PASS HTML relative image resolves
+PASS HTML JavaScript starts disabled
+PASS HTML JavaScript can be enabled per tab
+PASS Explicit refresh reloads assets with unchanged document text
+PASS Restart restores each tab's source/preview/split mode
+PASS Preview mode restart preserves unsaved Markdown source
+PASS Restored preview renders the recovered snapshot
+PASS SVG document preview renders as an image
+PASS Native SCN_MACRORECORD captures text insertion and cursor movements
+PASS Macro text is copied out of the temporary native pointer
+PASS Fixed repeat count applies exactly twice
+PASS One undo reverses the entire repeated macro
+PASS Run until EOF edits every original line including the last line once
+PASS Run until EOF begins at current cursor position
+PASS EOF repetition covers short/empty lines 0
+PASS EOF repetition covers short/empty lines 1
+PASS EOF repetition covers short/empty lines 2
+PASS EOF repetition covers short/empty lines 3
+PASS EOF repetition covers short/empty lines 4
+PASS EOF repetition covers short/empty lines 5
+PASS EOF repetition covers short/empty lines 6
+PASS EOF repetition covers short/empty lines 7
+PASS EOF repetition covers short/empty lines 8
+PASS EOF repetition covers short/empty lines 9
+PASS EOF repetition covers short/empty lines 10
+PASS EOF repetition covers short/empty lines 11
+PASS EOF repetition covers short/empty lines 12
+PASS EOF repetition covers short/empty lines 13
+PASS EOF repetition covers short/empty lines 14
+PASS EOF repetition covers short/empty lines 15
+PASS EOF repetition covers short/empty lines 16
+PASS EOF repetition covers short/empty lines 17
+PASS EOF repetition covers short/empty lines 18
+PASS EOF repetition covers short/empty lines 19
+PASS EOF repetition covers short/empty lines 20
+PASS EOF repetition covers short/empty lines 21
+PASS EOF repetition covers short/empty lines 22
+PASS EOF repetition covers short/empty lines 23
+PASS EOF repetition covers short/empty lines 24
+PASS EOF repetition covers short/empty lines 25
+PASS EOF repetition covers short/empty lines 26
+PASS EOF repetition covers short/empty lines 27
+PASS EOF repetition covers short/empty lines 28
+PASS EOF repetition covers short/empty lines 29
+PASS EOF repetition covers short/empty lines 30
+PASS EOF repetition covers short/empty lines 31
+PASS EOF repetition covers short/empty lines 32
+PASS EOF repetition covers short/empty lines 33
+PASS EOF repetition covers short/empty lines 34
+PASS EOF repetition covers short/empty lines 35
+PASS EOF repetition covers short/empty lines 36
+PASS EOF repetition covers short/empty lines 37
+PASS EOF repetition covers short/empty lines 38
+PASS EOF repetition covers short/empty lines 39
+PASS EOF repetition covers short/empty lines 40
+PASS EOF repetition covers short/empty lines 41
+PASS EOF repetition covers short/empty lines 42
+PASS EOF repetition covers short/empty lines 43
+PASS EOF repetition covers short/empty lines 44
+PASS EOF repetition covers short/empty lines 45
+PASS EOF repetition covers short/empty lines 46
+PASS EOF repetition covers short/empty lines 47
+PASS EOF repetition covers short/empty lines 48
+PASS EOF repetition covers short/empty lines 49
+PASS EOF repetition covers short/empty lines 50
+PASS EOF repetition covers short/empty lines 51
+PASS EOF repetition covers short/empty lines 52
+PASS EOF repetition covers short/empty lines 53
+PASS EOF repetition covers short/empty lines 54
+PASS EOF repetition covers short/empty lines 55
+PASS EOF repetition covers short/empty lines 56
+PASS EOF repetition covers short/empty lines 57
+PASS EOF repetition covers short/empty lines 58
+PASS EOF repetition covers short/empty lines 59
+PASS Last recording and named macros persist in profile
+PASS Persisted named macro replays without native pointers
+PASS Saved macro can be renamed
+PASS Saved macro can be deleted
+PASS Actual WM_CHAR Korean typing is recorded
+PASS Recorded Korean typing replays as UTF-8
+PASS CRLF recording normalizes to one newline command
+PASS Recorded newline follows target document EOL mode
+PASS Until EOF stops insertion-only macros rather than growing indefinitely
+PASS Until EOF handles shrinking documents and line deletion
+PASS Until EOF stops a macro that moves away from document end
+PASS Until EOF stops a macro that only creates new lines
+PASS Recorded semantic search finds UTF-8 byte offsets
+PASS Recorded semantic replace repeats until no matches remain
+PASS Recorded regex replace-all retains captures and options
+PASS Formatting command replays semantically instead of storing absolute offsets
+PASS Selected-line sort is replayed
+PASS Column-numbering macro uses current multiple cursors
+PASS Until EOF never wraps recorded searches back to document start
+PASS Recorded EOL conversion replays
+PASS Macro replay rejects commands that could treat persisted values as pointers
+PASS Long repeat remains responsive and can be cancelled
+PASS Cancelled repetition remains one undo action
+PASS File loading is excluded from native recording
+PASS Invalid macro files are preserved and not executed
+PASS Windows icon contains nine size variants from 16 to 256 pixels
+PASS Main window connects the recorder to its text tabs
+PASS Idle log polling does not reload or duplicate existing content
+PASS Partial UTF-8 append 1 remains incremental
+PASS An unfinished multibyte character is tracked without replacement glyphs
+PASS Partial UTF-8 append 2 remains incremental
+PASS Partial UTF-8 append 3 remains incremental
+PASS Partial UTF-8 append 4 remains incremental
+PASS Partial UTF-8 append 5 remains incremental
+PASS Partial UTF-8 append 6 remains incremental
+PASS Partial UTF-8 append 7 remains incremental
+PASS Partial UTF-8 append 8 remains incremental
+PASS Partial UTF-8 append 9 remains incremental
+PASS Partial UTF-8 append 10 remains incremental
+PASS Partial UTF-8 append 11 remains incremental
+PASS Partial UTF-8 append 12 remains incremental
+PASS UTF-8 characters and surrogate pairs survive split writes across polling cycles
+PASS A completed split character clears the pending-input state
+PASS Code page 1200 preserves decoder state across split writes
+PASS Code page 1200 resets decoder and skips BOM on file replacement
+PASS Code page 949 preserves decoder state across split writes
+PASS Code page 949 resets decoder and skips BOM on file replacement
+PASS Truncated log replaces the displayed content
+PASS Truncate-and-regrow is recognized by its original boundary bytes
+PASS Log rotation is recognized by Windows file identity
+PASS Deleted logs retain the current view while waiting for recreation
+PASS Recreated logs resume without manual reopening
+PASS Large log bursts read a bounded 256 KiB block per polling cycle
+PASS The next polling cycle drains the remaining log backlog
+PASS Text detection accepts a file held open by a log writer
+PASS Bounded document loading allows a persistent writer handle
+PASS The initial load retains its observed disk stamp for later append detection
+PASS External-change confirmation can keep the existing document
+PASS Declining reload suppresses duplicate prompts without clearing the overwrite conflict
+PASS A manual change check can ask again after an earlier declined reload
+PASS Accepting external reload updates the same tab and resets the saved state
+PASS Replacing the native document invalidates cached preview and recovery revisions
+PASS Declining reload preserves unsaved edits
+PASS Failed reload leaves the original native document and unsaved edits intact
+PASS Log monitoring switches the existing editor to read-only
+PASS Typing into a monitored document cannot change its content
+PASS Live app appends Unicode log entries, follows EOF and keeps the tab clean
+PASS Live log contents remain searchable for analysis
+PASS Disabling follow preserves the selected analysis position while appending new data
+PASS Monitoring prevents overwriting the live log through Save
+PASS The live editor replaces a truncated log instead of appending stale data
+PASS Stopping monitoring restores normal editing
+PASS External deletion is reported once and preserves the editor content
+PASS Idle editor leaves tab headers unchanged across timer ticks (invalidations=0)
+PASS Idle toolbar has no transient enable/disable changes (changes=0)
+PASS Editing still refreshes the document's unsaved tab indicator
+PASS Saved state still clears the unsaved tab indicator
+PASS Caret movement updates position without repainting tab headers or toggling toolbar controls
+PASS Recording still changes the button's status color
+PASS An unchanged monitored log leaves tab headers and toolbar state stable
+PASS Live log append updates content without flashing an unsaved tab icon
+PASS Text count honors case-insensitive matching
+PASS Text count honors case sensitivity
+PASS Text count honors whole-word matching
+PASS Text count handles Korean UTF-8 positions
+PASS Zero-width regular expression counting makes Unicode-safe progress
+PASS Counting leaves selection, cursor, content and saved state intact
+PASS Text count reports zero when no matches exist
+PASS An empty text count terminates without matching every position
+PASS Text count uses non-overlapping matches
+PASS Text count supports cancellation
+PASS Hex streaming count includes offset zero and matches crossing the 1 MiB read boundary
+PASS Hex count includes unsaved piece-table insertions
+PASS Forward Hex search still sees inserted bytes after the streaming scan change
+PASS Hex count supports cancellation
+PASS Default Hex search accepts the visible program string and includes the current first byte
+PASS Repeating a Hex text search advances to the next occurrence
+PASS Find dialog displays only the total number of Hex matches
+PASS Hex count preserves the current byte selection and file contents
+PASS Invalid raw Hex input gives an inline Korean hint instead of an English exception dialog
+PASS Explicit raw Hex byte count remains available
+PASS UTF-16 LE strings can be counted inside binary data
+PASS ASCII search rejects unrepresentable Korean instead of silently searching question marks
+PASS UTF-8 Korean strings can be counted inside binary data
+PASS Hex text count uses explicit case-sensitive byte matching
+PASS The same count button works in text mode without moving its cursor
+PASS 16px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 16px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 16px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 16px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 20px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 20px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 20px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 20px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 24px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 24px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 24px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 24px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 30px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 30px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 30px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 30px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 32px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 32px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 32px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 32px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 40px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 40px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 40px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 40px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS A removed or smaller monitor brings the saved window fully into the current working area
+PASS A still-connected secondary monitor preserves valid negative screen coordinates
+PASS Damaged window settings recover from the previous atomic backup
+PASS Normal window dimensions and position are written on actual application exit
+PASS A real application restart restores the last normal window size and position
+PASS Window restoration keeps existing unsaved-tab session recovery working
+PASS Maximizing retains the original normal restore bounds
+PASS A real application restart restores maximized state and its normal restore bounds
+PASS Closing while minimized preserves the previous maximized state
+PASS A window closed from the taskbar reopens visibly instead of starting minimized
+PASS Restoring a maximized window returns to the user's previous normal dimensions
+PASS c lexer identifies nested brace headers and the native parent of their body
+PASS c string and comment braces do not create or prematurely close folds
+PASS cpp lexer identifies nested brace headers and the native parent of their body
+PASS cpp string and comment braces do not create or prematurely close folds
+PASS Expanded native fold regions retain connected vertical and corner guides next to line numbers
+PASS One real folding-margin click collapses exactly once and preserves the following sibling block
+PASS A second real folding-margin click expands the same block exactly once
+PASS Clicking the line-number margin does not toggle a fold
+PASS Current-block folding from a body line targets its nearest enclosing header and keeps the caret visible
+PASS Expand all restores every nested header and line
+PASS Collapse all also contracts nested children in every sibling block
+PASS Folding level two leaves outer blocks expanded while hiding the nested block body
+PASS Unfolding level two reveals the nested body again
+PASS Folding changes no text, saved-state flag, revision or undo history
+PASS Fold commands preserve an already dirty document and its pending undo entry
+PASS Undo after fold operations reverses the text edit without extra view-only undo steps
+PASS Switching a collapsed source file to plain text reveals every line and removes stale fold headers
+PASS Plain-text braces cannot create bogus folds or hide content
+PASS Entering large-file plain-view mode reveals previously hidden lines and disables source folding
+PASS HTML lexer folds nested div and section tags using their actual native hierarchy
+PASS HTML img and br void elements and one-line tags do not create false fold regions
+PASS Collapsing an inner HTML div preserves its containing section and outside content
+PASS XML folds nested elements without treating self-closing or one-line elements as headers
+PASS XML collapse all hides nested content while retaining the declaration
+PASS JSON folds objects and arrays while ignoring braces inside strings
+PASS JSON expand all restores the complete saved document
+PASS Fold menus expose current-block and Notepad++-style collapse/expand-all shortcuts
+PASS The folding submenu is enabled for a supported source document
+PASS The actual application collapse-all menu hides nested source content
+PASS Find navigates to a match inside collapsed blocks and automatically reveals every enclosing fold
+PASS The actual expand-all menu reveals the complete source file without marking its tab dirty
+PASS Read-only source documents still allow view-only folding
+PASS The folding submenu is disabled for plain text even when it contains brace characters
+PASS The folding submenu is disabled for a Hex document
+PASS Actual command-key dispatch collapses and expands after switching from Hex to source without reopening the View menu
+PASS New text editors enable indentation continuation by default
+PASS Native Enter preserves exactly two tab bytes and positions the caret after them with CRLF endings
+PASS One undo removes both the CRLF newline and its automatic indentation
+PASS One redo restores both the CRLF newline and its automatic indentation
+PASS Native Enter preserves exactly two tab bytes and positions the caret after them with LF endings
+PASS One undo removes both the LF newline and its automatic indentation
+PASS One redo restores both the LF newline and its automatic indentation
+PASS Native Enter preserves exactly two tab bytes and positions the caret after them with CR endings
+PASS One undo removes both the CR newline and its automatic indentation
+PASS One redo restores both the CR newline and its automatic indentation
+PASS SCI_NEWLINE preserves the exact leading whitespace bytes 2020
+PASS SCI_NEWLINE preserves the exact leading whitespace bytes 20202020
+PASS SCI_NEWLINE preserves the exact leading whitespace bytes 20092020
+PASS A brace does not add an extra indentation level beyond the previous line's prefix
+PASS Enter on an unindented plain-text line retains normal newline behavior
+PASS Enter in an empty document adds only a newline
+PASS Splitting a Unicode line carries its indentation and leaves the right-hand text after the caret
+PASS Enter inside leading whitespace copies only the prefix to the left of the caret
+PASS An indentation-only line continues its exact tab prefix
+PASS Disabling automatic indentation leaves the native newline unindented
+PASS Neither keyboard Enter nor SCI_NEWLINE changes a read-only document
+PASS Multiline replacement/paste text is inserted verbatim without automatic indentation
+PASS Native bulk ADDTEXT insertion does not indent imported lines
+PASS Native APPENDTEXT log/import insertion preserves its exact source bytes
+PASS SetText never inserts extra whitespace into multiline content
+PASS Loading a text file preserves its indentation and saved state exactly
+PASS One newline command continues the distinct tab and space prefixes at multiple carets
+PASS A single undo reverses every caret's newline and continued indentation
+PASS Recording Enter stores one semantic newline without recording its generated tab prefix separately
+PASS Replaying a recorded Enter adds exactly one copy of the tab indentation
+PASS Recorded Enter and its generated indentation remain one undo action during playback
+PASS Recorded Enter follows the destination line's indentation instead of the original recording's tabs
+PASS A multiple-caret Enter records one newline and replays each caret's indentation once
+PASS The Edit menu and first text tab expose automatic indentation as enabled by default
+PASS Toggling automatic indentation off updates existing text tabs and the next new tab
+PASS The disabled global option produces an unindented newline in a newly created tab
+PASS A real application restart restores the disabled indentation preference on every recovered text tab
+PASS Re-enabling the menu option applies immediately to all restored text tabs
+PASS dialog-find-text: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 다음 찾기:40, 이전 찾기:40, 일치 개수:40, 바꾸기:40, 모두 바꾸기:40, 중지:40)
+PASS dialog-find-text: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-find-text: dialog height follows the content without an unused bottom area
+PASS Find count remains visible in the compact text dialog
+PASS dialog-find-hex: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 다음 찾기:40, 이전 찾기:40, 일치 개수:40, 바꾸기:40, 모두 바꾸기:40, 중지:40)
+PASS dialog-find-hex: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-find-hex: dialog height follows the content without an unused bottom area
+PASS Hex search adds only the format and hint rows to the compact dialog
+PASS dialog-find-validation: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 다음 찾기:40, 이전 찾기:40, 일치 개수:40, 바꾸기:40, 모두 바꾸기:40, 중지:40)
+PASS dialog-find-validation: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-find-validation: dialog height follows the content without an unused bottom area
+PASS Long Hex validation feedback stays available after the layout change
+PASS dialog-go-to: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 확인:40)
+PASS dialog-go-to: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-go-to: dialog height follows the content without an unused bottom area
+PASS Input dialog retains initial value and Enter/Escape actions
+PASS dialog-column: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 적용:40)
+PASS dialog-column: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-column: dialog height follows the content without an unused bottom area
+PASS Column editor still switches between string and numeric entry
+PASS dialog-macro-repeat: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 실행:40)
+PASS dialog-macro-repeat: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-macro-repeat: dialog height follows the content without an unused bottom area
+PASS Macro repeat keeps EOF mode, count disabling and selected steps
+PASS dialog-macro-manager: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 닫기:40, 삭제:40, 이름 변경:40)
+PASS dialog-macro-manager: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-macro-manager: dialog height follows the content without an unused bottom area
+PASS dialog-about: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 확인:40)
+PASS dialog-about: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-about: dialog height follows the content without an unused bottom area
+PASS About dialog shows a large centered app icon above the information
+PASS dialog-confirm: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 취소:40, 아니요:40, 예:40)
+PASS dialog-confirm: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-confirm: dialog height follows the content without an unused bottom area
+PASS Confirmation dialog preserves its explicit Yes and Cancel results
+PASS dialog-long-message: every action button has the shared DPI-scaled height (DPI 120, expected 40, actual 확인:40)
+PASS dialog-long-message: action buttons fit inside their rows and the dialog without clipping
+PASS dialog-long-message: dialog height follows the content without an unused bottom area
+PASS Lengthy messages use scrolling instead of an oversized window
+PASS Modal confirmation focuses its primary action and returns the selected Yes result
+PASS Modal confirmation focuses its primary action and returns the selected No result
+PASS Modal confirmation focuses its primary action and returns the selected Cancel result
+PASS Closing a Yes/No confirmation does not approve the action
+ALL TESTS PASSED

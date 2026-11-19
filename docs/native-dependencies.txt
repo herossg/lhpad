@@ -1,0 +1,31 @@
+FILE: Lexilla.dll
+KERNEL32.dll
+0 [       0] RVA [size] of COM Descriptor Directory
+FILE: LitePad.exe
+USER32.dll
+GDI32.dll
+COMCTL32.dll
+COMDLG32.dll
+SHELL32.dll
+SHLWAPI.dll
+ole32.dll
+ADVAPI32.dll
+bcrypt.dll
+gdiplus.dll
+KERNEL32.dll
+0 [       0] RVA [size] of COM Descriptor Directory
+FILE: Scintilla.dll
+KERNEL32.dll
+USER32.dll
+GDI32.dll
+IMM32.dll
+ole32.dll
+OLEAUT32.dll
+ADVAPI32.dll
+SHELL32.dll
+0 [       0] RVA [size] of COM Descriptor Directory
+FILE: WebView2Loader.dll
+KERNEL32.dll
+ole32.dll
+ADVAPI32.dll
+0 [       0] RVA [size] of COM Descriptor Directory

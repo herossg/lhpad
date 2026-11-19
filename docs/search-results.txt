@@ -1,0 +1,26 @@
+PASS Text count honors case-insensitive matching
+PASS Text count honors case sensitivity
+PASS Text count honors whole-word matching
+PASS Text count handles Korean UTF-8 positions
+PASS Zero-width regular expression counting makes Unicode-safe progress
+PASS Counting leaves selection, cursor, content and saved state intact
+PASS Text count reports zero when no matches exist
+PASS An empty text count terminates without matching every position
+PASS Text count uses non-overlapping matches
+PASS Text count supports cancellation
+PASS Hex streaming count includes offset zero and matches crossing the 1 MiB read boundary
+PASS Hex count includes unsaved piece-table insertions
+PASS Forward Hex search still sees inserted bytes after the streaming scan change
+PASS Hex count supports cancellation
+PASS Default Hex search accepts the visible program string and includes the current first byte
+PASS Repeating a Hex text search advances to the next occurrence
+PASS Find dialog displays only the total number of Hex matches
+PASS Hex count preserves the current byte selection and file contents
+PASS Invalid raw Hex input gives an inline Korean hint instead of an English exception dialog
+PASS Explicit raw Hex byte count remains available
+PASS UTF-16 LE strings can be counted inside binary data
+PASS ASCII search rejects unrepresentable Korean instead of silently searching question marks
+PASS UTF-8 Korean strings can be counted inside binary data
+PASS Hex text count uses explicit case-sensitive byte matching
+PASS The same count button works in text mode without moving its cursor
+ALL TESTS PASSED

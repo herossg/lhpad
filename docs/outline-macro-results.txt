@@ -1,0 +1,94 @@
+PASS Native SCN_MACRORECORD captures text insertion and cursor movements
+PASS Macro text is copied out of the temporary native pointer
+PASS Fixed repeat count applies exactly twice
+PASS One undo reverses the entire repeated macro
+PASS Run until EOF edits every original line including the last line once
+PASS Run until EOF begins at current cursor position
+PASS EOF repetition covers short/empty lines 0
+PASS EOF repetition covers short/empty lines 1
+PASS EOF repetition covers short/empty lines 2
+PASS EOF repetition covers short/empty lines 3
+PASS EOF repetition covers short/empty lines 4
+PASS EOF repetition covers short/empty lines 5
+PASS EOF repetition covers short/empty lines 6
+PASS EOF repetition covers short/empty lines 7
+PASS EOF repetition covers short/empty lines 8
+PASS EOF repetition covers short/empty lines 9
+PASS EOF repetition covers short/empty lines 10
+PASS EOF repetition covers short/empty lines 11
+PASS EOF repetition covers short/empty lines 12
+PASS EOF repetition covers short/empty lines 13
+PASS EOF repetition covers short/empty lines 14
+PASS EOF repetition covers short/empty lines 15
+PASS EOF repetition covers short/empty lines 16
+PASS EOF repetition covers short/empty lines 17
+PASS EOF repetition covers short/empty lines 18
+PASS EOF repetition covers short/empty lines 19
+PASS EOF repetition covers short/empty lines 20
+PASS EOF repetition covers short/empty lines 21
+PASS EOF repetition covers short/empty lines 22
+PASS EOF repetition covers short/empty lines 23
+PASS EOF repetition covers short/empty lines 24
+PASS EOF repetition covers short/empty lines 25
+PASS EOF repetition covers short/empty lines 26
+PASS EOF repetition covers short/empty lines 27
+PASS EOF repetition covers short/empty lines 28
+PASS EOF repetition covers short/empty lines 29
+PASS EOF repetition covers short/empty lines 30
+PASS EOF repetition covers short/empty lines 31
+PASS EOF repetition covers short/empty lines 32
+PASS EOF repetition covers short/empty lines 33
+PASS EOF repetition covers short/empty lines 34
+PASS EOF repetition covers short/empty lines 35
+PASS EOF repetition covers short/empty lines 36
+PASS EOF repetition covers short/empty lines 37
+PASS EOF repetition covers short/empty lines 38
+PASS EOF repetition covers short/empty lines 39
+PASS EOF repetition covers short/empty lines 40
+PASS EOF repetition covers short/empty lines 41
+PASS EOF repetition covers short/empty lines 42
+PASS EOF repetition covers short/empty lines 43
+PASS EOF repetition covers short/empty lines 44
+PASS EOF repetition covers short/empty lines 45
+PASS EOF repetition covers short/empty lines 46
+PASS EOF repetition covers short/empty lines 47
+PASS EOF repetition covers short/empty lines 48
+PASS EOF repetition covers short/empty lines 49
+PASS EOF repetition covers short/empty lines 50
+PASS EOF repetition covers short/empty lines 51
+PASS EOF repetition covers short/empty lines 52
+PASS EOF repetition covers short/empty lines 53
+PASS EOF repetition covers short/empty lines 54
+PASS EOF repetition covers short/empty lines 55
+PASS EOF repetition covers short/empty lines 56
+PASS EOF repetition covers short/empty lines 57
+PASS EOF repetition covers short/empty lines 58
+PASS EOF repetition covers short/empty lines 59
+PASS Last recording and named macros persist in profile
+PASS Persisted named macro replays without native pointers
+PASS Saved macro can be renamed
+PASS Saved macro can be deleted
+PASS Actual WM_CHAR Korean typing is recorded
+PASS Recorded Korean typing replays as UTF-8
+PASS CRLF recording normalizes to one newline command
+PASS Recorded newline follows target document EOL mode
+PASS Until EOF stops insertion-only macros rather than growing indefinitely
+PASS Until EOF handles shrinking documents and line deletion
+PASS Until EOF stops a macro that moves away from document end
+PASS Until EOF stops a macro that only creates new lines
+PASS Recorded semantic search finds UTF-8 byte offsets
+PASS Recorded semantic replace repeats until no matches remain
+PASS Recorded regex replace-all retains captures and options
+PASS Formatting command replays semantically instead of storing absolute offsets
+PASS Selected-line sort is replayed
+PASS Column-numbering macro uses current multiple cursors
+PASS Until EOF never wraps recorded searches back to document start
+PASS Recorded EOL conversion replays
+PASS Macro replay rejects commands that could treat persisted values as pointers
+PASS Long repeat remains responsive and can be cancelled
+PASS Cancelled repetition remains one undo action
+PASS File loading is excluded from native recording
+PASS Invalid macro files are preserved and not executed
+PASS Windows icon contains nine size variants from 16 to 256 pixels
+PASS Main window connects the recorder to its text tabs
+ALL TESTS PASSED

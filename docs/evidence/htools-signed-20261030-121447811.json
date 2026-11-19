@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-10-30T12:14:56.308Z",
+  "version": "1.1.0",
+  "url": "https://htools.duckdns.org/downloads/LHPad-1.1.0-windows-x64.zip",
+  "bytes": 5971996,
+  "sha256": "378881a454a820163797fd3e9b207f8e2c7c972923964aded0e71f8a8cc33b97",
+  "backup": "/data/data/com.termux/files/home/backups/htools-lhpad-signed-20261030-121447811",
+  "changed": [
+    "index.html",
+    "downloads/releases.json",
+    "downloads/SHA256SUMS.txt",
+    "downloads/LHPad-1.1.0-windows-x64.zip"
+  ],
+  "httpsSha256Matched": true,
+  "signatures": [
+    {
+      "file": "LHPad.exe",
+      "status": "Valid",
+      "signer": "CN=LHZip Development",
+      "thumbprint": "537D10B46D7742E859498D5642863AEC947973CB",
+      "timestampSigner": "CN=DigiCert SHA256 RSA4096 Timestamp Responder 2026 1, O=\"DigiCert, Inc.\", C=US",
+      "sha256": "4887863bfcd5a3749a24d91e2da88f051b20d7ecd24feaa4514fbeda9773e1bb"
+    },
+    {
+      "file": "LHPadShell.dll",
+      "status": "Valid",
+      "signer": "CN=LHZip Development",
+      "thumbprint": "537D10B46D7742E859498D5642863AEC947973CB",
+      "timestampSigner": "CN=DigiCert SHA256 RSA4096 Timestamp Responder 2026 1, O=\"DigiCert, Inc.\", C=US",
+      "sha256": "63438e2fe9ad6b2c7010be49b69b11cd1199a2db814f8ac48bdf8c1fd681af65"
+    },
+    {
+      "file": "Scintilla.dll",
+      "status": "Valid",
+      "signer": "CN=LHZip Development",
+      "thumbprint": "537D10B46D7742E859498D5642863AEC947973CB",
+      "timestampSigner": "CN=DigiCert SHA256 RSA4096 Timestamp Responder 2026 1, O=\"DigiCert, Inc.\", C=US",
+      "sha256": "686e915098a4afc5f5fc804928c4c553a19c8214805409ea90038b682f1c0d3b"
+    },
+    {
+      "file": "Lexilla.dll",
+      "status": "Valid",
+      "signer": "CN=LHZip Development",
+      "thumbprint": "537D10B46D7742E859498D5642863AEC947973CB",
+      "timestampSigner": "CN=DigiCert SHA256 RSA4096 Timestamp Responder 2026 1, O=\"DigiCert, Inc.\", C=US",
+      "sha256": "44b3e4795db4de64a29fa18ee1bfd3aca34eb9ed0e5952210cbee84dceed68c5"
+    },
+    {
+      "file": "WebView2Loader.dll",
+      "status": "Valid",
+      "signer": "CN=LHZip Development",
+      "thumbprint": "537D10B46D7742E859498D5642863AEC947973CB",
+      "timestampSigner": "CN=DigiCert SHA256 RSA4096 Timestamp Responder 2026 1, O=\"DigiCert, Inc.\", C=US",
+      "sha256": "149f8687c4f6a52ef6cc48f4579c8a8d6cc5f9744a1fe60d959eeeb44a0ba9d7"
+    }
+  ],
+  "servicesRestarted": false
+}

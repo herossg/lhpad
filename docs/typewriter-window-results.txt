@@ -1,0 +1,36 @@
+PASS 16px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 16px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 16px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 16px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 20px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 20px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 20px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 20px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 24px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 24px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 24px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 24px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 30px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 30px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 30px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 30px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 32px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 32px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 32px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 32px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS 40px saved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 40px saved typewriter keeps its pastel mint-blue body, light paper/keys and dark contours
+PASS 40px unsaved typewriter has transparent outer edges and upper corners with a large unclipped silhouette
+PASS 40px unsaved typewriter keeps its pastel rose body, light paper/keys and dark contours
+PASS A removed or smaller monitor brings the saved window fully into the current working area
+PASS A still-connected secondary monitor preserves valid negative screen coordinates
+PASS Damaged window settings recover from the previous atomic backup
+PASS Normal window dimensions and position are written on actual application exit
+PASS A real application restart restores the last normal window size and position
+PASS Window restoration keeps existing unsaved-tab session recovery working
+PASS Maximizing retains the original normal restore bounds
+PASS A real application restart restores maximized state and its normal restore bounds
+PASS Closing while minimized preserves the previous maximized state
+PASS A window closed from the taskbar reopens visibly instead of starting minimized
+PASS Restoring a maximized window returns to the user's previous normal dimensions
+ALL TESTS PASSED

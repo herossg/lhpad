@@ -1,0 +1,39 @@
+PASS New text editors enable indentation continuation by default
+PASS Native Enter preserves exactly two tab bytes and positions the caret after them with CRLF endings
+PASS One undo removes both the CRLF newline and its automatic indentation
+PASS One redo restores both the CRLF newline and its automatic indentation
+PASS Native Enter preserves exactly two tab bytes and positions the caret after them with LF endings
+PASS One undo removes both the LF newline and its automatic indentation
+PASS One redo restores both the LF newline and its automatic indentation
+PASS Native Enter preserves exactly two tab bytes and positions the caret after them with CR endings
+PASS One undo removes both the CR newline and its automatic indentation
+PASS One redo restores both the CR newline and its automatic indentation
+PASS SCI_NEWLINE preserves the exact leading whitespace bytes 2020
+PASS SCI_NEWLINE preserves the exact leading whitespace bytes 20202020
+PASS SCI_NEWLINE preserves the exact leading whitespace bytes 20092020
+PASS A brace does not add an extra indentation level beyond the previous line's prefix
+PASS Enter on an unindented plain-text line retains normal newline behavior
+PASS Enter in an empty document adds only a newline
+PASS Splitting a Unicode line carries its indentation and leaves the right-hand text after the caret
+PASS Enter inside leading whitespace copies only the prefix to the left of the caret
+PASS An indentation-only line continues its exact tab prefix
+PASS Disabling automatic indentation leaves the native newline unindented
+PASS Neither keyboard Enter nor SCI_NEWLINE changes a read-only document
+PASS Multiline replacement/paste text is inserted verbatim without automatic indentation
+PASS Native bulk ADDTEXT insertion does not indent imported lines
+PASS Native APPENDTEXT log/import insertion preserves its exact source bytes
+PASS SetText never inserts extra whitespace into multiline content
+PASS Loading a text file preserves its indentation and saved state exactly
+PASS One newline command continues the distinct tab and space prefixes at multiple carets
+PASS A single undo reverses every caret's newline and continued indentation
+PASS Recording Enter stores one semantic newline without recording its generated tab prefix separately
+PASS Replaying a recorded Enter adds exactly one copy of the tab indentation
+PASS Recorded Enter and its generated indentation remain one undo action during playback
+PASS Recorded Enter follows the destination line's indentation instead of the original recording's tabs
+PASS A multiple-caret Enter records one newline and replays each caret's indentation once
+PASS The Edit menu and first text tab expose automatic indentation as enabled by default
+PASS Toggling automatic indentation off updates existing text tabs and the next new tab
+PASS The disabled global option produces an unindented newline in a newly created tab
+PASS A real application restart restores the disabled indentation preference on every recovered text tab
+PASS Re-enabling the menu option applies immediately to all restored text tabs
+ALL TESTS PASSED

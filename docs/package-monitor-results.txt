@@ -1,0 +1,47 @@
+PASS Idle log polling does not reload or duplicate existing content
+PASS Partial UTF-8 append 1 remains incremental
+PASS An unfinished multibyte character is tracked without replacement glyphs
+PASS Partial UTF-8 append 2 remains incremental
+PASS Partial UTF-8 append 3 remains incremental
+PASS Partial UTF-8 append 4 remains incremental
+PASS Partial UTF-8 append 5 remains incremental
+PASS Partial UTF-8 append 6 remains incremental
+PASS Partial UTF-8 append 7 remains incremental
+PASS Partial UTF-8 append 8 remains incremental
+PASS Partial UTF-8 append 9 remains incremental
+PASS Partial UTF-8 append 10 remains incremental
+PASS Partial UTF-8 append 11 remains incremental
+PASS Partial UTF-8 append 12 remains incremental
+PASS UTF-8 characters and surrogate pairs survive split writes across polling cycles
+PASS A completed split character clears the pending-input state
+PASS Code page 1200 preserves decoder state across split writes
+PASS Code page 1200 resets decoder and skips BOM on file replacement
+PASS Code page 949 preserves decoder state across split writes
+PASS Code page 949 resets decoder and skips BOM on file replacement
+PASS Truncated log replaces the displayed content
+PASS Truncate-and-regrow is recognized by its original boundary bytes
+PASS Log rotation is recognized by Windows file identity
+PASS Deleted logs retain the current view while waiting for recreation
+PASS Recreated logs resume without manual reopening
+PASS Large log bursts read a bounded 256 KiB block per polling cycle
+PASS The next polling cycle drains the remaining log backlog
+PASS Text detection accepts a file held open by a log writer
+PASS Bounded document loading allows a persistent writer handle
+PASS The initial load retains its observed disk stamp for later append detection
+PASS External-change confirmation can keep the existing document
+PASS Declining reload suppresses duplicate prompts without clearing the overwrite conflict
+PASS A manual change check can ask again after an earlier declined reload
+PASS Accepting external reload updates the same tab and resets the saved state
+PASS Replacing the native document invalidates cached preview and recovery revisions
+PASS Declining reload preserves unsaved edits
+PASS Failed reload leaves the original native document and unsaved edits intact
+PASS Log monitoring switches the existing editor to read-only
+PASS Typing into a monitored document cannot change its content
+PASS Live app appends Unicode log entries, follows EOF and keeps the tab clean
+PASS Live log contents remain searchable for analysis
+PASS Disabling follow preserves the selected analysis position while appending new data
+PASS Monitoring prevents overwriting the live log through Save
+PASS The live editor replaces a truncated log instead of appending stale data
+PASS Stopping monitoring restores normal editing
+PASS External deletion is reported once and preserves the editor content
+ALL TESTS PASSED

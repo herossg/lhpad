@@ -1,0 +1,10 @@
+PASS 16px: transparent outer edge; 42.6% fully transparent pixels; visible bounds [1,2..14,13]; old green backing pixels 0
+PASS 20px: transparent outer edge; 41.5% fully transparent pixels; visible bounds [1,3..17,17]; old green backing pixels 0
+PASS 24px: transparent outer edge; 33.0% fully transparent pixels; visible bounds [1,2..22,21]; old green backing pixels 0
+PASS 32px: transparent outer edge; 34.4% fully transparent pixels; visible bounds [1,3..30,28]; old green backing pixels 0
+PASS 40px: transparent outer edge; 37.0% fully transparent pixels; visible bounds [1,4..37,35]; old green backing pixels 0
+PASS 48px: transparent outer edge; 35.9% fully transparent pixels; visible bounds [2,5..45,42]; old green backing pixels 0
+PASS 64px: transparent outer edge; 37.8% fully transparent pixels; visible bounds [3,7..60,57]; old green backing pixels 0
+PASS 128px: transparent outer edge; 39.8% fully transparent pixels; visible bounds [6,15..121,114]; old green backing pixels 0
+PASS 256px: transparent outer edge; 40.3% fully transparent pixels; visible bounds [12,30..242,229]; old green backing pixels 0
+PASS: all nine EXE icon frames match the final transparent typewriter ICO byte-for-byte. FileVersion 0.4.6.0.

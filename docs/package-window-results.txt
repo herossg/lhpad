@@ -1,0 +1,26 @@
+PASS 16px saved tab icon has four complete black edges and transparent space outside every edge
+PASS 16px unsaved tab icon has four complete black edges and transparent space outside every edge
+PASS 20px saved tab icon has four complete black edges and transparent space outside every edge
+PASS 20px unsaved tab icon has four complete black edges and transparent space outside every edge
+PASS 24px saved tab icon has four complete black edges and transparent space outside every edge
+PASS 24px unsaved tab icon has four complete black edges and transparent space outside every edge
+PASS 30px saved tab icon has four complete black edges and transparent space outside every edge
+PASS 30px unsaved tab icon has four complete black edges and transparent space outside every edge
+PASS 32px saved tab icon has four complete black edges and transparent space outside every edge
+PASS 32px unsaved tab icon has four complete black edges and transparent space outside every edge
+PASS 40px saved tab icon has four complete black edges and transparent space outside every edge
+PASS 40px unsaved tab icon has four complete black edges and transparent space outside every edge
+PASS Saved tab keeps transparency inside its frame around the paper
+PASS Unsaved tab keeps its pastel red background inside the complete frame
+PASS A removed or smaller monitor brings the saved window fully into the current working area
+PASS A still-connected secondary monitor preserves valid negative screen coordinates
+PASS Damaged window settings recover from the previous atomic backup
+PASS Normal window dimensions and position are written on actual application exit
+PASS A real application restart restores the last normal window size and position
+PASS Window restoration keeps existing unsaved-tab session recovery working
+PASS Maximizing retains the original normal restore bounds
+PASS A real application restart restores maximized state and its normal restore bounds
+PASS Closing while minimized preserves the previous maximized state
+PASS A window closed from the taskbar reopens visibly instead of starting minimized
+PASS Restoring a maximized window returns to the user's previous normal dimensions
+ALL TESTS PASSED

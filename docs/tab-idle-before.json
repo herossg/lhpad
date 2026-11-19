@@ -1,0 +1,8 @@
+{
+  "BackgroundErases": 5,
+  "IdleMilliseconds": 3400,
+  "ImageWrites": 20,
+  "Paints": 5,
+  "TabWrites": 20,
+  "TextWrites": 20
+}

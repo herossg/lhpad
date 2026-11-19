@@ -1,0 +1,36 @@
+PASS c lexer identifies nested brace headers and the native parent of their body
+PASS c string and comment braces do not create or prematurely close folds
+PASS cpp lexer identifies nested brace headers and the native parent of their body
+PASS cpp string and comment braces do not create or prematurely close folds
+PASS Expanded native fold regions retain connected vertical and corner guides next to line numbers
+PASS One real folding-margin click collapses exactly once and preserves the following sibling block
+PASS A second real folding-margin click expands the same block exactly once
+PASS Clicking the line-number margin does not toggle a fold
+PASS Current-block folding from a body line targets its nearest enclosing header and keeps the caret visible
+PASS Expand all restores every nested header and line
+PASS Collapse all also contracts nested children in every sibling block
+PASS Folding level two leaves outer blocks expanded while hiding the nested block body
+PASS Unfolding level two reveals the nested body again
+PASS Folding changes no text, saved-state flag, revision or undo history
+PASS Fold commands preserve an already dirty document and its pending undo entry
+PASS Undo after fold operations reverses the text edit without extra view-only undo steps
+PASS Switching a collapsed source file to plain text reveals every line and removes stale fold headers
+PASS Plain-text braces cannot create bogus folds or hide content
+PASS Entering large-file plain-view mode reveals previously hidden lines and disables source folding
+PASS HTML lexer folds nested div and section tags using their actual native hierarchy
+PASS HTML img and br void elements and one-line tags do not create false fold regions
+PASS Collapsing an inner HTML div preserves its containing section and outside content
+PASS XML folds nested elements without treating self-closing or one-line elements as headers
+PASS XML collapse all hides nested content while retaining the declaration
+PASS JSON folds objects and arrays while ignoring braces inside strings
+PASS JSON expand all restores the complete saved document
+PASS Fold menus expose current-block and Notepad++-style collapse/expand-all shortcuts
+PASS The folding submenu is enabled for a supported source document
+PASS The actual application collapse-all menu hides nested source content
+PASS Find navigates to a match inside collapsed blocks and automatically reveals every enclosing fold
+PASS The actual expand-all menu reveals the complete source file without marking its tab dirty
+PASS Read-only source documents still allow view-only folding
+PASS The folding submenu is disabled for plain text even when it contains brace characters
+PASS The folding submenu is disabled for a Hex document
+PASS Actual command-key dispatch collapses and expands after switching from Hex to source without reopening the View menu
+ALL TESTS PASSED

@@ -1,0 +1,131 @@
+PASS Idle timers and automatic backup do not rewrite any tab header (writes=0)
+PASS Tab redraw suppression keeps the automatic session backup running
+PASS Repeated cursor movement and UI updates do not rewrite unchanged tab headers
+PASS First unsaved edit updates only that tab's status icon once
+PASS Further edits preserve an already-unsaved tab header without repaint requests
+PASS Saving changes the tab icon back without rewriting its title
+PASS Renaming updates only the changed tab title
+PASS Comparison selection refreshes its title marker only once
+PASS Editing an inactive document updates only that background tab icon
+PASS Closing another tab leaves surviving tab state synchronized
+PASS Close button has one square drawing/hit rectangle at DPI 96
+PASS Close button has one square drawing/hit rectangle at DPI 120
+PASS Close button has one square drawing/hit rectangle at DPI 144
+PASS Close button has one square drawing/hit rectangle at DPI 192
+PASS The visible X center is exactly the close-button hit target
+PASS Padding to the right of X is outside the close-button target
+PASS Hovering the actual X displays a distinct button background
+PASS Pressing X captures the mouse and displays its pressed background
+PASS Dragging out of X before release cancels closing and releases capture
+PASS Clicking to the right of X selects the tab without closing it
+PASS Click and release on the drawn X closes the intended document
+PASS Closing an inactive tab does not activate it or close the current document
+PASS Close-button geometry follows horizontally scrolled tabs
+PASS Tab scroll arrows cannot be mistaken for a close button
+PASS Process runs without .NET CLR
+PASS Native language catalog retains Notepad++ mappings
+PASS Encoding roundtrip UTF8
+PASS Native file stream and BOM UTF8
+PASS Encoding roundtrip UTF8 BOM
+PASS Native file stream and BOM UTF8 BOM
+PASS Encoding roundtrip UTF16LE
+PASS Native file stream and BOM UTF16LE
+PASS Encoding roundtrip UTF16BE
+PASS Native file stream and BOM UTF16BE
+PASS Encoding roundtrip UTF32LE
+PASS Native file stream and BOM UTF32LE
+PASS Encoding roundtrip UTF32BE
+PASS Native file stream and BOM UTF32BE
+PASS Encoding roundtrip CP949
+PASS Native file stream and BOM CP949
+PASS Encoding roundtrip EUC-KR
+PASS Native file stream and BOM EUC-KR
+PASS Unrepresentable text rejects lossy encoding
+PASS Multibyte character across streaming boundary UTF8
+PASS Multibyte character across streaming boundary UTF16
+PASS Multibyte character across streaming boundary CP949
+PASS Multibyte character across streaming boundary GB18030
+PASS Failed encoding save preserves original file atomically
+PASS Unicode file read and atomic save work beyond MAX_PATH without OS policy changes
+PASS Recovery JSON and its atomic backup work beyond MAX_PATH
+PASS Long Unicode paths retain file identity and size metadata
+PASS Native edit notification sets dirty tab state
+PASS Undo preserves Korean UTF8
+PASS Auto-indent literal tabs EOL 0
+PASS Newline and indentation undo as one action
+PASS Auto-indent literal tabs EOL 2
+PASS Newline and indentation undo as one action
+PASS Auto-indent literal tabs EOL 1
+PASS Newline and indentation undo as one action
+PASS Auto-indent preference disables continuation
+PASS Multi-caret Enter preserves each original indentation
+PASS Multi-caret auto-indent grouped undo
+PASS Count matches preserves cursor and selection
+PASS Unicode replace-all
+PASS Replace-all grouped undo
+PASS Boost regex captures and replacement
+PASS Zero-width replace-all terminates
+PASS Invalid regex rejected with validation
+PASS JSON native lexer applies syntax colors
+PASS Native code folding collapses nested blocks
+PASS Native code folding expands all levels
+PASS Extension auto-detection
+PASS JSON formatting semantic roundtrip
+PASS XML formatting preserves declaration
+PASS XML formatter prohibits external entity DTDs
+PASS SQL formatting preserves strings comments and tokens
+PASS HTML formatting preserves inline spaces and raw scripts
+PASS Native Markdown headings tables tasks and fenced code
+PASS Binary content detection
+PASS Hex overwrite piece table
+PASS Hex undo returns clean original
+PASS Hex streaming search sees dirty bytes
+PASS Hex atomic file save
+PASS Hex insertion shifts original bytes
+PASS Hex deletion updates 64-bit length
+PASS SHA256 native BCrypt known vector
+PASS Actual Hex window nibble editing
+PASS Native SCN_MACRORECORD captures edits
+PASS Native Unicode macro repeat
+PASS Whole macro repeat grouped undo
+PASS C# compatible macro JSON save/reload
+PASS Macro loader rejects pointer commands
+PASS Newline macro captures one semantic step
+PASS Line diff coverage invariant 0
+PASS Line diff coverage invariant 1
+PASS Line diff coverage invariant 2
+PASS Line diff coverage invariant 3
+PASS Line diff coverage invariant 4
+PASS Line diff coverage invariant 5
+PASS Line diff coverage invariant 6
+PASS Line diff coverage invariant 7
+PASS Line diff coverage invariant 8
+PASS Line diff coverage invariant 9
+PASS Line diff coverage invariant 10
+PASS Line diff coverage invariant 11
+PASS Line diff coverage invariant 12
+PASS Line diff coverage invariant 13
+PASS Line diff coverage invariant 14
+PASS Line diff coverage invariant 15
+PASS Line diff coverage invariant 16
+PASS Line diff coverage invariant 17
+PASS Line diff coverage invariant 18
+PASS Line diff coverage invariant 19
+PASS Line diff coverage invariant 20
+PASS Line diff coverage invariant 21
+PASS Line diff coverage invariant 22
+PASS Line diff coverage invariant 23
+PASS Line diff coverage invariant 24
+PASS Line diff coverage invariant 25
+PASS Line diff coverage invariant 26
+PASS Line diff coverage invariant 27
+PASS Line diff coverage invariant 28
+PASS Line diff coverage invariant 29
+PASS Log tail appends Korean while editor stays read-only
+PASS Log rotation resets replaced file
+PASS Log stop restores normal editing
+PASS Shell file drop opens Korean path with spaces from tab area
+PASS Native editor file drop handles multiple paths and deduplicates tabs
+PASS Running-instance WM_COPYDATA accepts UTF8 file list
+PASS Running-instance opens delivered file in new tab
+FAIL Actual OLE CF_HDROP opens multiple Unicode files over native Scintilla

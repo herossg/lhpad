@@ -1,0 +1,7 @@
+bin/
+obj/
+artifacts/
+vendor/notepad-plus-plus/
+native/*.log
+*.user
+build/

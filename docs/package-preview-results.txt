@@ -1,0 +1,28 @@
+PASS Preview detects Markdown HTML and SVG extensions
+PASS Plain text stays in lightweight source mode
+PASS Markdown extension selects the Markdown syntax lexer
+PASS Opening Markdown does not start WebView2
+PASS WebView2 Markdown render: 
+PASS Markdown heading is rendered rather than shown as source
+PASS Markdown emphasis renders
+PASS Markdown pipe table renders
+PASS Markdown task list renders
+PASS Markdown fenced HTML remains literal code
+PASS Markdown relative image with Korean name and space resolves
+PASS Preview does not automatically execute document JavaScript
+PASS Debounced preview reflects unsaved edits
+PASS Live preview never saves or changes the source file
+PASS Full preview mode switches without changing source
+PASS Large document preview is bounded without disabling source editing
+PASS WebView2 HTML render: 
+PASS HTML document body renders
+PASS HTML relative external stylesheet resolves
+PASS HTML relative image resolves
+PASS HTML JavaScript starts disabled
+PASS HTML JavaScript can be enabled per tab
+PASS Explicit refresh reloads assets with unchanged document text
+PASS Restart restores each tab's source/preview/split mode
+PASS Preview mode restart preserves unsaved Markdown source
+PASS Restored preview renders the recovered snapshot
+PASS SVG document preview renders as an image
+ALL TESTS PASSED
