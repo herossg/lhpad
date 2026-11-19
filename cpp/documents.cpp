@@ -125,7 +125,9 @@ void App::settings() {
                               {{L"탭 너비 (1~16)", std::to_wstring(tabWidth)},
                                {L"Tab 키로 탭 문자 넣기 (끄면 공백)", L"", true, useTabs},
                                {L"괄호 짝 강조", L"", true, braceMatch},
-                               {L"자동 들여쓰기", L"", true, autoIndent}},
+                               {L"자동 들여쓰기", L"", true, autoIndent},
+                               {L"입력할 때 자동 완성 목록 표시", L"", true, autoComplete},
+                               {L"자동 완성을 시작할 글자 수 (1~10)", std::to_wstring(completeMinChars)}},
                               L"모든 텍스트 탭에 바로 적용되고 다음 실행에도 유지됩니다.");
     if (!fields)
         return;
@@ -140,6 +142,19 @@ void App::settings() {
     }
     if (width < 1 || width > 16)
         fail(L"탭 너비는 1~16 사이의 숫자로 입력해 주세요.");
+    int minChars = 0;
+    try {
+        size_t used = 0;
+        minChars = std::stoi((*fields)[5].value, &used);
+        if (used != (*fields)[5].value.size())
+            minChars = 0;
+    } catch (...) {
+        minChars = 0;
+    }
+    if (minChars < 1 || minChars > 10)
+        fail(L"자동 완성 글자 수는 1~10 사이의 숫자로 입력해 주세요.");
+    autoComplete = (*fields)[4].checked;
+    completeMinChars = minChars;
     tabWidth = width;
     useTabs = (*fields)[1].checked;
     braceMatch = (*fields)[2].checked;
@@ -584,7 +599,9 @@ void App::backup() {
                     {"FindFilter", narrow(findFilter)},
                     {"FindSubfolders", findSubfolders},
                     {"OutlineVisible", outlineVisible},
-                    {"DarkMode", darkMode}};
+                    {"DarkMode", darkMode},
+                    {"AutoComplete", autoComplete},
+                    {"CompleteMinChars", completeMinChars}};
     Json recent = Json::array();
     for (auto &p : recentFiles)
         recent.push_back(narrow(p.wstring()));
@@ -643,6 +660,9 @@ void App::restore() {
         findFilter = wide(session["FindFilter"].get<std::string>());
     findSubfolders = session.value("FindSubfolders", true);
     bool showOutlinePanel = session.value("OutlineVisible", false);
+    autoComplete = session.value("AutoComplete", true);
+    if (session.contains("CompleteMinChars") && session["CompleteMinChars"].is_number_integer())
+        completeMinChars = std::clamp(session["CompleteMinChars"].get<int>(), 1, 10);
     if (session.contains("DarkMode") && session["DarkMode"].is_boolean())
         darkMode = session["DarkMode"].get<bool>();
     setDarkMode(darkMode); // Tabs restored below are created with the right colours.
@@ -994,7 +1014,7 @@ LRESULT CALLBACK App::editorProc(HWND h, UINT m, WPARAM w, LPARAM l, UINT_PTR id
         return DefSubclassProc(h, m, w, l);
     if ((a->busy || a->playing) && (m == WM_CHAR || m == WM_KEYDOWN || m == WM_PASTE || m == WM_CUT))
         return 0;
-    if (!a->newlineActive &&
+    if (!a->newlineActive && !(m == WM_KEYDOWN && sci(h, SCI_AUTOCACTIVE)) &&
         (m == SCI_NEWLINE ||
          m == WM_KEYDOWN && w == VK_RETURN && GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_MENU) >= 0)) {
         a->guard([&] { a->newline(*d, m, w, l); });

@@ -98,6 +98,7 @@ enum Command {
     SplitEditor,
     OutlinePanel,
     DarkMode,
+    Complete,
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,
@@ -229,6 +230,13 @@ class App {
     std::string outlineDocId;
     uint64_t outlineRevision = ~uint64_t{};
     bool darkMode = false;
+    bool autoComplete = true;
+    int completeMinChars = 3;
+    struct CompletionCache {
+        std::string docId, language;
+        uint64_t revision = 0, built = 0;
+        std::vector<std::string> words, keywords;
+    } completion;
     std::vector<MacroStep> recorded, lastMacro;
     std::vector<SavedMacroEntry> savedMacros;
     std::set<std::string> compareIds;
@@ -300,6 +308,8 @@ class App {
     void refreshOutline(bool force);
     void goToOutline(int index);
     void applyDarkMode();
+    std::vector<std::string> completionWords(Document &d, const std::string &prefix);
+    void showCompletion(bool manual);
     void rebuildToolbarImages();
     void paintTabs(HDC dc);
     void paintStatus(HDC dc);

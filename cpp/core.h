@@ -180,6 +180,7 @@ class Languages {
     Languages();
     std::string detect(const fs::path &path) const;
     CommentTokens comment(const std::string &name) const;
+    std::vector<std::string> keywords(const std::string &name) const;
     void apply(HWND sci, const std::string &name, bool large = false) const;
     // Re-applies colours only (theme change) without touching the lexer, folding or styling state.
     void recolor(HWND sci, const std::string &name, bool large = false) const;

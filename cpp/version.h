@@ -3,8 +3,8 @@
 // C++ 코드와 LHPad.rc는 이 헤더를 include하고, CMake와 tools/의 스크립트는
 // 같은 #define 줄을 읽는다(tools/version.ps1, tools/publish-htools.mjs).
 #define LHPAD_VERSION_MAJOR 1
-#define LHPAD_VERSION_MINOR 5
-#define LHPAD_VERSION_PATCH 1
+#define LHPAD_VERSION_MINOR 6
+#define LHPAD_VERSION_PATCH 0
 
 #define LHPAD_VERSION_STRINGIZE_(x) #x
 #define LHPAD_VERSION_STRINGIZE(x) LHPAD_VERSION_STRINGIZE_(x)

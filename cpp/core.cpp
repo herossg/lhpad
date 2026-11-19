@@ -872,6 +872,12 @@ void Languages::theme(HWND h) {
     sci(h, SCI_MARKERSETBACK, 20, p.diffAdded);
     sci(h, SCI_MARKERSETBACK, 21, p.diffRemoved);
     sci(h, SCI_MARKERSETBACK, 22, p.diffChanged);
+    // Auto-completion list (Scintilla 5 element colours; alpha byte 0xFF = opaque).
+    auto opaque = [](COLORREF c) { return static_cast<LPARAM>(c | 0xFF000000u); };
+    sci(h, SCI_SETELEMENTCOLOUR, SC_ELEMENT_LIST, opaque(p.editorText));
+    sci(h, SCI_SETELEMENTCOLOUR, SC_ELEMENT_LIST_BACK, opaque(p.dark ? p.panel : RGB(255, 255, 255)));
+    sci(h, SCI_SETELEMENTCOLOUR, SC_ELEMENT_LIST_SELECTED, opaque(p.selectionText));
+    sci(h, SCI_SETELEMENTCOLOUR, SC_ELEMENT_LIST_SELECTED_BACK, opaque(p.selection));
     // Scroll bars follow the window theme; the dark Explorer theme exists on Windows 10 1809+.
     SetWindowTheme(h, p.dark ? L"DarkMode_Explorer" : nullptr, nullptr);
 }

@@ -487,6 +487,7 @@ int runTests(App &a, bool full) {
     };
     try {
         a.starting = false;
+        a.autoComplete = false; // Keystroke-driven tests expect plain typing; completion is tested on its own.
         auto text = a.newDocument();
         tabUiTests(a, *text, output, check);
         tabCloseTests(a, output, check);
@@ -829,6 +830,51 @@ int runTests(App &a, bool full) {
             a.showOutline(false);
             useLanguage("normal");
             check(!IsWindowVisible(a.outlineList), "Outline panel can be hidden");
+            // 1.6 auto-completion: document words and language keywords.
+            a.autoComplete = true;
+            useLanguage("normal");
+            setText(*text, "alpha alphabet beta\nal");
+            sci(h, SCI_GOTOPOS, sci(h, SCI_GETLENGTH));
+            a.completion = {};
+            check(a.completionWords(*text, "al") == std::vector<std::string>{"alpha", "alphabet"},
+                  "Completion offers document words that start with the prefix");
+            a.showCompletion(true);
+            check(sci(h, SCI_AUTOCACTIVE) != 0, "Ctrl+Space shows completion even for a short prefix");
+            sci(h, SCI_AUTOCCANCEL);
+            a.completeMinChars = 3;
+            a.showCompletion(false);
+            check(!sci(h, SCI_AUTOCACTIVE), "Typing shows no list before the minimum length");
+            str(h, SCI_REPLACESEL, "p");
+            a.showCompletion(false);
+            check(sci(h, SCI_AUTOCACTIVE) != 0, "Typing the minimum length shows the list");
+            SendMessageW(h, WM_KEYDOWN, VK_RETURN, 0);
+            check(all(*text) == "alpha alphabet beta\nalpha" && !sci(h, SCI_AUTOCACTIVE),
+                  "Enter inserts the chosen completion instead of a line break");
+            useLanguage("cpp");
+            setText(*text, "ret");
+            a.completion = {};
+            auto keywordWords = a.completionWords(*text, "ret");
+            check(std::find(keywordWords.begin(), keywordWords.end(), "return") != keywordWords.end(),
+                  "Completion offers the language's keywords");
+            useLanguage("normal");
+            setText(*text, "한글나라 한글 12345 abcde\n");
+            a.completion = {};
+            auto koreanWords = a.completionWords(*text, "한글");
+            check(std::find(koreanWords.begin(), koreanWords.end(), "한글나라") != koreanWords.end() &&
+                      a.completionWords(*text, "12").empty(),
+                  "Completion handles Korean words and ignores numbers");
+            a.autoComplete = false;
+            setText(*text, "alpha\nalp");
+            sci(h, SCI_GOTOPOS, sci(h, SCI_GETLENGTH));
+            a.completion = {};
+            a.showCompletion(false);
+            check(!sci(h, SCI_AUTOCACTIVE), "Turning auto-completion off stops the automatic list");
+            a.autoComplete = true;
+            a.recording = true;
+            a.showCompletion(false);
+            check(!sci(h, SCI_AUTOCACTIVE), "No automatic list while a macro is being recorded");
+            a.recording = false;
+            a.autoComplete = false;
             // 1.5 dark mode: palette, editor recolouring without touching text, panels and menu state.
             constexpr int cppKeyword = 5; // SCE_C_WORD in Lexilla's SciLexer.h
             auto luminance = [](COLORREF c) { return (GetRValue(c) * 299 + GetGValue(c) * 587 + GetBValue(c) * 114) / 1000; };

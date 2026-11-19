@@ -119,6 +119,7 @@ void App::buildMenu() {
     item(caseMenu, TitleCase, L"단어 첫 글자만 대문자로");
     item(e, ToggleComment, L"주석 넣기 / 빼기\tCtrl+Q");
     item(e, BraceJump, L"짝 괄호로 이동\tCtrl+B");
+    item(e, Complete, L"자동 완성 목록\tCtrl+Space");
     sep(e);
     item(e, AutoIndent, L"자동 들여쓰기");
     auto s = root(L"검색(&S)");
@@ -979,6 +980,9 @@ void App::command(int id) {
             darkMode = !darkMode;
             applyDarkMode();
             break;
+        case Complete:
+            showCompletion(true);
+            break;
         case Find:
             showFind(false);
             break;
@@ -1151,7 +1155,7 @@ void App::command(int id) {
                 L"두 탭 비교\nCtrl+Alt+B: 현재 구간 접기\nCtrl+Shift+V: 미리보기\nCtrl+Alt+V: 분할 보기\n"
                 L"Ctrl+Q: 주석 넣기 / 빼기\nCtrl+B: 짝 괄호로 이동\nCtrl+Shift+U / Ctrl+U: 대문자 / 소문자\n"
                 L"Ctrl+Shift+T: 닫은 탭 다시 열기\nCtrl+Shift+F: 파일에서 찾기\nF4 / Shift+F4: 다음 / 이전 검색 결과\n"
-                L"Ctrl+F2 / F2 / Shift+F2: 북마크 표시 / 다음 / 이전",
+                L"Ctrl+F2 / F2 / Shift+F2: 북마크 표시 / 다음 / 이전\nCtrl+Space: 자동 완성",
                 L"편집 단축키");
             break;
         }
@@ -1279,6 +1283,9 @@ bool App::shortcut(MSG &m) {
             break;
         case 'B':
             id = BraceJump;
+            break;
+        case VK_SPACE:
+            id = Complete;
             break;
         case VK_ADD:
         case VK_OEM_PLUS:
@@ -1553,6 +1560,8 @@ LRESULT App::notify(NMHDR *n) {
     case SCN_CHARADDED:
         if (newlineActive && (s.ch == '\r' || s.ch == '\n'))
             newlineObserved = true;
+        else if (!d->loading && !macroSuppressed && (s.ch > 0x7F || std::isalnum(s.ch) || s.ch == '_'))
+            guard([&] { showCompletion(false); });
         break;
     case SCN_MACRORECORD:
         if (recording && !macroSuppressed && !d->loading && !d->monitor)
