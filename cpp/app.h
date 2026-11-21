@@ -100,6 +100,7 @@ enum Command {
     DarkMode,
     Complete,
     AutoCompleteToggle,
+    LineCommand, // First of LineOperationCount consecutive ids, one per LineOperation.
     FoldLevel = 300,
     UnfoldLevel = 310,
     EncodingReopen = 400,
@@ -108,6 +109,26 @@ enum Command {
     SavedMacro = 1000,
     RecentFile = 2000
 };
+// Line operations (편집 → 줄 작업). Values are stored in macros (MacroStep kind 11, start), so only append.
+enum LineOperation {
+    LineSortAsc,
+    LineSortDesc,
+    LineSortAscNoCase,
+    LineSortDescNoCase,
+    LineSortNumberAsc,
+    LineSortNumberDesc,
+    LineReverse,
+    LineRemoveDuplicates,
+    LineRemoveEmpty,
+    LineTrimTrailing,
+    LineTabsToSpaces,
+    LineSpacesToTabs,
+    LineOperationCount
+};
+// Menu command id of a LineOperation.
+constexpr int lineCommand(int operation) {
+    return static_cast<int>(LineCommand) + operation;
+}
 inline constexpr size_t recentLimit = 15, closedLimit = 20;
 struct ClosedTab {
     fs::path path;
@@ -346,6 +367,9 @@ class App {
     void column();
     void format();
     void sort(bool descending);
+    // Applies a LineOperation to the selected lines, or to the whole document without a selection.
+    // Returns how many lines changed or were removed.
+    size_t lineOperation(int operation);
     void edit(int message);
     void fold(int depth, bool expanded);
     void compare();

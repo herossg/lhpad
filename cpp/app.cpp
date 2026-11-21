@@ -111,8 +111,23 @@ void App::buildMenu() {
     item(e, DeleteLine, L"현재 줄 삭제\tCtrl+L");
     item(e, LineUp, L"줄 위로 이동\tCtrl+Shift+↑");
     item(e, LineDown, L"줄 아래로 이동\tCtrl+Shift+↓");
-    item(e, SortAsc, L"선택 줄 오름차순 정렬");
-    item(e, SortDesc, L"선택 줄 내림차순 정렬");
+    // Line operations work on the selected lines, or on the whole document when nothing is selected.
+    auto lineMenu = CreatePopupMenu();
+    AppendMenuW(e, MF_POPUP, reinterpret_cast<UINT_PTR>(lineMenu), L"줄 작업 (선택 줄 / 문서 전체)");
+    item(lineMenu, SortAsc, L"오름차순 정렬");
+    item(lineMenu, SortDesc, L"내림차순 정렬");
+    item(lineMenu, lineCommand(LineSortAscNoCase), L"대소문자 무시 오름차순 정렬");
+    item(lineMenu, lineCommand(LineSortDescNoCase), L"대소문자 무시 내림차순 정렬");
+    item(lineMenu, lineCommand(LineSortNumberAsc), L"숫자 오름차순 정렬");
+    item(lineMenu, lineCommand(LineSortNumberDesc), L"숫자 내림차순 정렬");
+    item(lineMenu, lineCommand(LineReverse), L"줄 순서 뒤집기");
+    sep(lineMenu);
+    item(lineMenu, lineCommand(LineRemoveDuplicates), L"중복 줄 제거 (처음 것 유지)");
+    item(lineMenu, lineCommand(LineRemoveEmpty), L"빈 줄 제거 (공백만 있는 줄 포함)");
+    sep(lineMenu);
+    item(lineMenu, lineCommand(LineTrimTrailing), L"줄 끝 공백 제거");
+    item(lineMenu, lineCommand(LineTabsToSpaces), L"탭을 공백으로");
+    item(lineMenu, lineCommand(LineSpacesToTabs), L"줄 앞 공백을 탭으로");
     auto caseMenu = CreatePopupMenu();
     AppendMenuW(e, MF_POPUP, reinterpret_cast<UINT_PTR>(caseMenu), L"대소문자 변환");
     item(caseMenu, UpperCase, L"대문자로\tCtrl+Shift+U");
@@ -786,6 +801,10 @@ void App::command(int id) {
             }
             return;
         }
+        if (id >= lineCommand(0) && id < lineCommand(LineOperationCount)) {
+            lineOperation(id - lineCommand(0));
+            return;
+        }
         if (id >= RecentFile && id < RecentFile + static_cast<int>(recentLimit)) {
             openRecent(static_cast<size_t>(id - RecentFile));
             return;
@@ -872,10 +891,10 @@ void App::command(int id) {
             edit(SCI_MOVESELECTEDLINESDOWN);
             break;
         case SortAsc:
-            sort(false);
+            lineOperation(LineSortAsc);
             break;
         case SortDesc:
-            sort(true);
+            lineOperation(LineSortDesc);
             break;
         case AutoIndent:
             autoIndent = !autoIndent;

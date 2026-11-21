@@ -841,6 +841,67 @@ int runTests(App &a, bool full) {
             a.showOutline(false);
             useLanguage("normal");
             check(!IsWindowVisible(a.outlineList), "Outline panel can be hidden");
+            // 1.7 line operations: whole document without a selection, selected lines otherwise.
+            useLanguage("normal");
+            sci(h, SCI_SETEOLMODE, SC_EOL_LF);
+            a.tabWidth = 4;
+            auto lineOp = [&](const char *source, int operation) {
+                setText(*text, source);
+                sci(h, SCI_GOTOPOS, 0);
+                a.lineOperation(operation);
+                return all(*text);
+            };
+            check(lineOp("b\nA\na\nB\n", LineSortAsc) == "A\nB\na\nb\n",
+                  "Sort without a selection sorts the document and keeps the final line break last");
+            check(lineOp("b\nA\na\nB\n", LineSortDesc) == "b\na\nB\nA\n", "Descending sort");
+            check(lineOp("b\nA\na\nB\n", LineSortAscNoCase) == "A\na\nb\nB\n",
+                  "Case-insensitive sort keeps equal lines in their original order");
+            check(lineOp("b\nA\na\nB\n", LineSortDescNoCase) == "b\nB\nA\na\n", "Case-insensitive descending sort");
+            check(lineOp("10 x\n9 y\nabc\n-2\n1.5\n", LineSortNumberAsc) == "-2\n1.5\n9 y\n10 x\nabc\n",
+                  "Numeric sort orders by value and keeps lines without numbers last");
+            check(lineOp("10 x\n9 y\nabc\n-2\n1.5\n", LineSortNumberDesc) == "10 x\n9 y\n1.5\n-2\nabc\n",
+                  "Numeric descending sort");
+            check(lineOp("1\n2\n3", LineReverse) == "3\n2\n1", "Reverse line order");
+            check(lineOp("a\nb\na\nc\nb", LineRemoveDuplicates) == "a\nb\nc", "Remove duplicate lines keeps the first");
+            check(lineOp("a\n\n  \nb\n\t\nc", LineRemoveEmpty) == "a\nb\nc",
+                  "Remove empty lines also removes whitespace-only lines");
+            check(lineOp("a  \nb\t\n c ", LineTrimTrailing) == "a\nb\n c", "Trim trailing whitespace");
+            check(lineOp("\tx\nab\ty\n한\tz", LineTabsToSpaces) == "    x\nab  y\n한   z",
+                  "Tabs to spaces follows tab stops and counts Korean characters as one column");
+            check(lineOp("        x\n      y\n\t  z", LineSpacesToTabs) == "\t\tx\n\t  y\n\t  z",
+                  "Leading spaces to tabs keeps the indentation width");
+            setText(*text, "c\nb\na\nz");
+            sci(h, SCI_SETSEL, 0, sci(h, SCI_POSITIONFROMLINE, 3));
+            check(a.lineOperation(LineSortAsc) == 2 && all(*text) == "a\nb\nc\nz" &&
+                      sci(h, SCI_GETSELECTIONSTART) == 0 && sci(h, SCI_GETSELECTIONEND) == 5,
+                  "Sorting a selection ending at column 0 sorts only the selected lines and reselects them");
+            sci(h, SCI_UNDO);
+            check(all(*text) == "c\nb\na\nz", "Line operations undo as one action");
+            setText(*text, "same\n");
+            check(a.lineOperation(LineTrimTrailing) == 0 && !sci(h, SCI_CANUNDO),
+                  "A line operation that changes nothing adds no undo step");
+            bool macrosLoad = true;
+            for (int kind : {8, 9, 10, 11}) {
+                MacroStep step;
+                step.kind = kind;
+                step.start = kind == 11 ? LineRemoveDuplicates : 0;
+                try {
+                    Json stored = step;
+                    auto loaded = stored.get<MacroStep>();
+                    macrosLoad = macrosLoad && loaded.kind == kind && loaded.start == step.start;
+                } catch (const std::exception &) {
+                    macrosLoad = false;
+                }
+            }
+            check(macrosLoad, "Saved macros with comment, title case, brace and line steps load again");
+            bool badStepRejected = false;
+            try {
+                Json bad = {{"Kind", 11}, {"Start", 99}};
+                (void)bad.get<MacroStep>();
+            } catch (const std::exception &) {
+                badStepRejected = true;
+            }
+            check(badStepRejected, "A saved line step with an unknown operation is rejected");
             // 1.6 auto-completion: document words and language keywords.
             a.autoComplete = true;
             useLanguage("normal");

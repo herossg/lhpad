@@ -1,6 +1,9 @@
 #include "app.h"
 #include "macro_commands.h"
+#include <cctype>
+#include <cstdlib>
 #include <cstring>
+#include <unordered_set>
 #include <windowsx.h>
 namespace lp {
 static std::string eol(HWND h) {
@@ -687,40 +690,170 @@ void App::format() {
     recordAction(step);
 }
 void App::sort(bool descending) {
+    // Kept for macros recorded before 1.7 (kind 6).
+    lineOperation(descending ? LineSortDesc : LineSortAsc);
+}
+static std::optional<double> leadingNumber(const std::string &row) {
+    size_t i = row.find_first_not_of(" \t");
+    if (i == std::string::npos)
+        return std::nullopt;
+    size_t j = i + (row[i] == '-' || row[i] == '+' ? 1 : 0);
+    if (j < row.size() && row[j] == '.')
+        j++;
+    if (j >= row.size() || !std::isdigit(static_cast<unsigned char>(row[j])))
+        return std::nullopt; // Only plain decimal numbers; "inf", "0x.." style words stay text.
+    char *end = nullptr;
+    double value = std::strtod(row.c_str() + i, &end);
+    return end == row.c_str() + i ? std::nullopt : std::optional<double>(value);
+}
+size_t App::lineOperation(int operation) {
     auto d = current();
-    if (!d || !d->editor || d->monitor)
-        return;
+    if (operation < 0 || operation >= LineOperationCount || !d || !d->editor || d->monitor)
+        return 0;
     auto h = d->editor;
-    Pos a = sci(h, SCI_GETSELECTIONSTART), b = sci(h, SCI_GETSELECTIONEND);
-    if (a == b)
-        fail(L"정렬할 줄을 선택해 주세요.");
-    Pos first = sci(h, SCI_LINEFROMPOSITION, a), last = sci(h, SCI_LINEFROMPOSITION, b);
-    a = sci(h, SCI_POSITIONFROMLINE, first);
-    if (b == sci(h, SCI_POSITIONFROMLINE, last))
-        last--;
-    b = sci(h, SCI_GETLINEENDPOSITION, last);
-    if (b - a > 32 * 1024 * 1024)
+    Pos a = sci(h, SCI_GETSELECTIONSTART), b = sci(h, SCI_GETSELECTIONEND), caret = sci(h, SCI_GETCURRENTPOS);
+    bool whole = a == b;
+    Pos first = 0, last = sci(h, SCI_GETLINECOUNT) - 1;
+    if (whole) {
+        // A document that ends with a line break has an empty last line; leave it where it is.
+        if (last > 0 && sci(h, SCI_POSITIONFROMLINE, last) == sci(h, SCI_GETLENGTH))
+            last--;
+    } else {
+        first = sci(h, SCI_LINEFROMPOSITION, a);
+        last = sci(h, SCI_LINEFROMPOSITION, b);
+        if (last > first && b == sci(h, SCI_POSITIONFROMLINE, last))
+            last--; // A selection ending at column 0 does not include that line.
+    }
+    Pos start = sci(h, SCI_POSITIONFROMLINE, first), end = sci(h, SCI_GETLINEENDPOSITION, last);
+    if (end - start > 32 * 1024 * 1024)
         fail(L"32 MiB 이하를 선택해 주세요.");
-    auto rows = lines(textRange(h, a, b - a));
-    std::sort(rows.begin(), rows.end());
-    if (descending)
+    const auto original = textRange(h, start, end - start);
+    auto rows = lines(original);
+    const size_t count = rows.size();
+    size_t changed = 0;
+    auto stableOrder = [&](auto less) {
+        std::vector<size_t> order(rows.size());
+        for (size_t i = 0; i < order.size(); i++)
+            order[i] = i;
+        std::stable_sort(order.begin(), order.end(), less);
+        std::vector<std::string> sorted;
+        sorted.reserve(rows.size());
+        for (auto i : order)
+            sorted.push_back(std::move(rows[i]));
+        rows = std::move(sorted);
+    };
+    switch (operation) {
+    case LineSortAsc:
+    case LineSortDesc: {
+        bool descending = operation == LineSortDesc;
+        stableOrder([&](size_t x, size_t y) { return descending ? rows[y] < rows[x] : rows[x] < rows[y]; });
+        break;
+    }
+    case LineSortAscNoCase:
+    case LineSortDescNoCase: {
+        bool descending = operation == LineSortDescNoCase;
+        std::vector<std::wstring> keys;
+        keys.reserve(rows.size());
+        for (auto &row : rows)
+            keys.push_back(wide(row, CP_UTF8, false));
+        auto less = [&](size_t x, size_t y) {
+            return CompareStringOrdinal(keys[x].c_str(), static_cast<int>(keys[x].size()), keys[y].c_str(),
+                                        static_cast<int>(keys[y].size()), TRUE) == CSTR_LESS_THAN;
+        };
+        stableOrder([&](size_t x, size_t y) { return descending ? less(y, x) : less(x, y); });
+        break;
+    }
+    case LineSortNumberAsc:
+    case LineSortNumberDesc: {
+        bool descending = operation == LineSortNumberDesc;
+        std::vector<std::optional<double>> keys;
+        keys.reserve(rows.size());
+        for (auto &row : rows)
+            keys.push_back(leadingNumber(row));
+        // Lines without a leading number keep their order after the numbered ones.
+        stableOrder([&](size_t x, size_t y) {
+            if (!keys[x] || !keys[y])
+                return keys[x].has_value() && !keys[y].has_value();
+            return descending ? *keys[y] < *keys[x] : *keys[x] < *keys[y];
+        });
+        break;
+    }
+    case LineReverse:
         std::reverse(rows.begin(), rows.end());
+        break;
+    case LineRemoveDuplicates: {
+        std::unordered_set<std::string> seen;
+        std::erase_if(rows, [&](const std::string &row) { return !seen.insert(row).second; });
+        break;
+    }
+    case LineRemoveEmpty:
+        std::erase_if(rows, [](const std::string &row) { return row.find_first_not_of(" \t") == std::string::npos; });
+        if (rows.empty())
+            rows.push_back({}); // Keep one (empty) line so the range still exists.
+        break;
+    case LineTrimTrailing:
+        for (auto &row : rows)
+            row.erase(row.find_last_not_of(" \t") + 1);
+        break;
+    case LineTabsToSpaces:
+        for (auto &row : rows) {
+            std::string out;
+            int column = 0;
+            for (unsigned char c : row) {
+                if (c == '\t') {
+                    int n = tabWidth - column % tabWidth;
+                    out.append(static_cast<size_t>(n), ' ');
+                    column += n;
+                } else {
+                    out += static_cast<char>(c);
+                    if ((c & 0xC0) != 0x80)
+                        column++; // One column per character, as SCI_GETCOLUMN counts.
+                }
+            }
+            row = std::move(out);
+        }
+        break;
+    case LineSpacesToTabs:
+        for (auto &row : rows) {
+            int column = 0;
+            size_t i = 0;
+            for (; i < row.size() && (row[i] == ' ' || row[i] == '\t'); i++)
+                column += row[i] == '\t' ? tabWidth - column % tabWidth : 1;
+            row = std::string(static_cast<size_t>(column / tabWidth), '\t') +
+                  std::string(static_cast<size_t>(column % tabWidth), ' ') + row.substr(i);
+        }
+        break;
+    }
     std::string out;
     for (size_t i = 0; i < rows.size(); i++) {
         if (i)
             out += eol(h);
         out += rows[i];
     }
-    bool suppression = macroSuppressed;
-    macroSuppressed = true;
-    sci(h, SCI_BEGINUNDOACTION);
-    replaceRange(h, a, b, out);
-    sci(h, SCI_ENDUNDOACTION);
-    macroSuppressed = suppression;
+    if (rows.size() != count)
+        changed = count - rows.size();
+    else {
+        auto before = lines(original);
+        for (size_t i = 0; i < rows.size(); i++)
+            changed += rows[i] != before[i];
+    }
+    if (out != original) {
+        bool suppression = macroSuppressed;
+        macroSuppressed = true;
+        sci(h, SCI_BEGINUNDOACTION);
+        replaceRange(h, start, end, out);
+        sci(h, SCI_ENDUNDOACTION);
+        if (whole)
+            sci(h, SCI_GOTOPOS, std::min<Pos>(caret, sci(h, SCI_GETLENGTH)));
+        else
+            sci(h, SCI_SETSEL, start, start + static_cast<Pos>(out.size()));
+        macroSuppressed = suppression;
+    }
     MacroStep step;
-    step.kind = 6;
-    step.descending = descending;
+    step.kind = 11;
+    step.start = operation;
     recordAction(step);
+    return changed;
 }
 void App::changeCase(int message) {
     auto d = current();
@@ -1038,7 +1171,8 @@ void from_json(const Json &j, MacroStep &s) {
     s.increment = j.value("Increment", 0ll);
     if (s.kind == 7)
         s.data = s.search.query;
-    if (s.kind < 0 || s.kind > 7 || s.data.size() > 4 * 1024 * 1024 ||
+    // Kinds 8-10 (comment, title case, brace jump) and 11 (line operations) were added in 1.2-1.7.
+    if (s.kind < 0 || s.kind > 11 || s.data.size() > 4 * 1024 * 1024 ||
         s.search.query.size() > 4 * 1024 * 1024 || s.search.replacement.size() > 4 * 1024 * 1024)
         fail(L"잘못된 매크로 동작입니다.");
     if (s.kind == 0) {
@@ -1052,6 +1186,8 @@ void from_json(const Json &j, MacroStep &s) {
     }
     if (s.kind == 4 && s.w > 2)
         fail(L"잘못된 줄바꿈 매크로입니다.");
+    if (s.kind == 11 && (s.start < 0 || s.start >= LineOperationCount))
+        fail(L"잘못된 줄 작업 매크로입니다.");
 }
 void App::recordAction(MacroStep s) {
     if (!recording || playing || macroSuppressed)
@@ -1165,6 +1301,9 @@ void App::runStep(const MacroStep &s) {
         break;
     case 10:
         jumpBrace();
+        break;
+    case 11:
+        lineOperation(static_cast<int>(s.start));
         break;
     }
 }
