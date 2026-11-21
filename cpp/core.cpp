@@ -1,6 +1,7 @@
 #include "core.h"
 #include <bcrypt.h>
 #include <cmath>
+#include <cstring>
 #include <uxtheme.h>
 #include <regex>
 #include <iomanip>
@@ -650,6 +651,61 @@ Pos BinaryBuffer::find(const Bytes &needle, Pos start, std::atomic_bool *cancel)
         pump();
     }
     return -1;
+}
+Pos BinaryBuffer::findBackward(const Bytes &needle, Pos before, std::atomic_bool *cancel) const {
+    const Pos n = static_cast<Pos>(needle.size());
+    if (!n || size() < n)
+        return -1;
+    Pos last = std::min(before - 1, size() - n); // Highest allowed start offset.
+    while (last >= 0) {
+        if (cancel && *cancel)
+            return -1;
+        Pos first = std::max<Pos>(0, last - (1 << 20) + 1);
+        auto b = read(first, last - first + n);
+        for (Pos i = last - first; i >= 0; i--)
+            if (b[static_cast<size_t>(i)] == needle[0] &&
+                std::memcmp(b.data() + i, needle.data(), needle.size()) == 0)
+                return first + i;
+        last = first - 1;
+        pump();
+    }
+    return -1;
+}
+void BinaryBuffer::replaceAll(const std::vector<Pos> &offsets, Pos remove, const Bytes &insert) {
+    if (offsets.empty())
+        return;
+    const Pos total = size();
+    for (size_t i = 0; i < offsets.size(); i++)
+        if (offsets[i] < 0 || offsets[i] + remove > total || (i && offsets[i] < offsets[i - 1] + remove))
+            fail(L"잘못된 바이트 범위입니다.");
+    // Building the piece list once keeps this linear; calling replace() per match would be quadratic.
+    auto data = std::make_shared<Bytes>(insert);
+    std::vector<Piece> next;
+    size_t index = 0;
+    Pos pieceStart = 0, cursor = 0;
+    auto copyUntil = [&](Pos until) {
+        while (cursor < until) {
+            while (index < pieces.size() && pieceStart + pieces[index].length <= cursor) {
+                pieceStart += pieces[index].length;
+                index++;
+            }
+            auto &p = pieces[index];
+            Pos inside = cursor - pieceStart, take = std::min(p.length - inside, until - cursor);
+            next.push_back({p.offset + inside, take, p.data});
+            cursor += take;
+        }
+    };
+    for (auto offset : offsets) {
+        copyUntil(offset);
+        if (!insert.empty())
+            next.push_back({0, static_cast<Pos>(insert.size()), data});
+        cursor = offset + remove;
+    }
+    copyUntil(total);
+    undo.push_back({pieces, revision});
+    redo.clear();
+    pieces = std::move(next);
+    revision = ++nextRevision;
 }
 std::string textRange(HWND h, Pos start, Pos count) {
     Sci_TextRangeFull r{{start, start + count}, nullptr};

@@ -253,6 +253,7 @@ class App {
     uint64_t outlineRevision = ~uint64_t{};
     bool darkMode = false;
     bool autoComplete = true;
+    bool compareIgnoreSpace = false, compareIgnoreCase = false;
     int completeMinChars = 3;
     struct CompletionCache {
         std::string docId, language;

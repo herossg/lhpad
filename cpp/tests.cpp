@@ -1277,6 +1277,73 @@ int runTests(App &a, bool full) {
         screenshot(a.compareWindow, output / L"native-compare.png");
         DestroyWindow(a.compareWindow);
         a.compareIds.clear();
+        {
+            // 1.8 compare: characters that differ inside a changed line, and ignore options.
+            auto diffText = [](const std::string &s, const std::vector<std::pair<size_t, size_t>> &r) {
+                std::string out;
+                for (auto [from, to] : r)
+                    out += "[" + s.substr(from, to - from) + "]";
+                return out;
+            };
+            auto parts = inlineDiff("a1b2c", "a3b4c");
+            auto korean = inlineDiff("한글 테스트", "한글 test");
+            check(diffText("a1b2c", parts.left) == "[1][2]" && diffText("a3b4c", parts.right) == "[3][4]" &&
+                      diffText("한글 테스트", korean.left) == "[테스트]" && diffText("한글 test", korean.right) == "[test]",
+                  "Inline diff marks only the changed characters, Korean by character");
+            check(compareKey("  A b\t", true, true) == "ab" && compareKey("A b", false, true) == "a b",
+                  "Compare keys drop whitespace and case only when asked");
+            auto markers = [](HWND view) { return sci(view, SCI_MARKERNEXT, 0, (1 << 20) | (1 << 21) | (1 << 22)); };
+            setText(*compareLeft, "x = 1\nSame Line\nend");
+            setText(*compareRight, "x = 2\nsame  line\nend");
+            a.compareIgnoreSpace = a.compareIgnoreCase = false;
+            a.compareIds = {compareLeft->id, compareRight->id};
+            a.compare();
+            auto plainLeft = GetDlgItem(a.compareWindow, 501), plainRight = GetDlgItem(a.compareWindow, 502);
+            check(markers(plainLeft) == 0 && sci(plainLeft, SCI_MARKERNEXT, 2, (1 << 20) | (1 << 21) | (1 << 22)) < 0,
+                  "Compare marks the changed lines");
+            check((sci(plainLeft, SCI_INDICATORALLONFOR, 4) & (1 << 12)) && !(sci(plainLeft, SCI_INDICATORALLONFOR, 0) & (1 << 12)) &&
+                      (sci(plainRight, SCI_INDICATORALLONFOR, 4) & (1 << 13)),
+                  "Compare highlights the changed characters on both sides");
+            DestroyWindow(a.compareWindow);
+            a.compareIgnoreSpace = a.compareIgnoreCase = true;
+            a.compare();
+            auto loose = GetDlgItem(a.compareWindow, 501);
+            check(markers(loose) == 0 && sci(loose, SCI_MARKERNEXT, 1, (1 << 20) | (1 << 21) | (1 << 22)) < 0 &&
+                      SendDlgItemMessageW(a.compareWindow, 513, BM_GETCHECK, 0, 0) == BST_CHECKED,
+                  "Ignoring whitespace and case leaves only the real change marked");
+            DestroyWindow(a.compareWindow);
+            a.compareIgnoreSpace = a.compareIgnoreCase = false;
+            a.compareIds.clear();
+            // 1.8 Hex: backward search, replace all and replacements of a different length.
+            auto hexPath = fixture / L"hex-replace.bin";
+            writeAtomic(hexPath, Bytes{0x00, 0xAA, 0xBB, 0x01, 0xAA, 0xBB, 0x02});
+            a.open(hexPath, true);
+            auto hexFile = a.current();
+            check(hexFile && hexFile->binary, "Hex fixture opens as binary");
+            a.search = {};
+            a.search.hexMode = 0;
+            a.search.query = "AA BB";
+            hexFile->anchor = hexFile->caret = hexFile->binary->size();
+            bool back1 = a.findNext(true) && std::min(hexFile->anchor, hexFile->caret) == 4;
+            bool back2 = a.findNext(true) && std::min(hexFile->anchor, hexFile->caret) == 1;
+            bool wrapped = a.findNext(true) && std::min(hexFile->anchor, hexFile->caret) == 4;
+            check(back1 && back2 && wrapped, "Hex find previous walks backwards and wraps to the end");
+            a.search.replacement = "CC";
+            check(a.countMatches(true) == 2 && hexFile->binary->read(0, hexFile->binary->size()) == Bytes({0x00, 0xCC, 0x01, 0xCC, 0x02}),
+                  "Hex replace all replaces every match, even with a shorter value");
+            hexFile->binary->undoEdit();
+            check(hexFile->binary->read(0, hexFile->binary->size()) == Bytes({0x00, 0xAA, 0xBB, 0x01, 0xAA, 0xBB, 0x02}),
+                  "Hex replace all undoes in one step");
+            hexFile->anchor = 1;
+            hexFile->caret = 3;
+            a.search.replacement = "DD EE FF";
+            a.replaceOne();
+            check(hexFile->binary->read(0, hexFile->binary->size()) == Bytes({0x00, 0xDD, 0xEE, 0xFF, 0x01, 0xAA, 0xBB, 0x02}),
+                  "Hex replace accepts a longer value and shifts the rest");
+            hexFile->binary->savedRevision = hexFile->binary->revision; // Close without the save prompt.
+            a.closeTab(a.active);
+            a.search = {};
+        }
         if (full) {
             auto largePath = fixture / L"large.txt";
             {

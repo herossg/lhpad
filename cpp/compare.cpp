@@ -1,7 +1,10 @@
 #include "app.h"
 namespace lp {
+// Indicators for the characters that differ inside a changed line pair.
+constexpr int inlineRemoved = 12, inlineAdded = 13;
 struct Comparison {
     App *app;
+    std::string leftId, rightId;
     HWND window = nullptr, left = nullptr, right = nullptr;
     std::vector<Pos> changes;
     int index = -1;
@@ -46,8 +49,12 @@ static LRESULT CALLBACK compareProc(HWND h, UINT m, WPARAM w, LPARAM l) {
         MoveWindow(GetDlgItem(h, 510), 8, 6, MulDiv(180, GetDpiForWindow(h), 96), bar - 10, TRUE);
         MoveWindow(GetDlgItem(h, 511), MulDiv(190, GetDpiForWindow(h), 96), 6,
                    MulDiv(180, GetDpiForWindow(h), 96), bar - 10, TRUE);
-        MoveWindow(GetDlgItem(h, 512), MulDiv(385, GetDpiForWindow(h), 96), 10,
-                   std::max(1L, r.right - MulDiv(390, GetDpiForWindow(h), 96)), bar - 10, TRUE);
+        MoveWindow(GetDlgItem(h, 513), MulDiv(385, GetDpiForWindow(h), 96), 6,
+                   MulDiv(110, GetDpiForWindow(h), 96), bar - 10, TRUE);
+        MoveWindow(GetDlgItem(h, 514), MulDiv(500, GetDpiForWindow(h), 96), 6,
+                   MulDiv(130, GetDpiForWindow(h), 96), bar - 10, TRUE);
+        MoveWindow(GetDlgItem(h, 512), MulDiv(640, GetDpiForWindow(h), 96), 10,
+                   std::max(1L, r.right - MulDiv(645, GetDpiForWindow(h), 96)), bar - 10, TRUE);
         MoveWindow(state->left, 0, bar, r.right / 2 - 2, std::max(1L, r.bottom - bar), TRUE);
         MoveWindow(state->right, r.right / 2 + 2, bar, r.right - r.right / 2 - 2,
                    std::max(1L, r.bottom - bar), TRUE);
@@ -58,6 +65,23 @@ static LRESULT CALLBACK compareProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             state->navigate(false);
         else if (LOWORD(w) == ComparePrev || LOWORD(w) == 511)
             state->navigate(true);
+        else if ((LOWORD(w) == 513 || LOWORD(w) == 514) && HIWORD(w) == BN_CLICKED) {
+            // Re-run the comparison with the new option in a window at the same place, then close this one.
+            auto &owner = *state->app;
+            (LOWORD(w) == 513 ? owner.compareIgnoreSpace : owner.compareIgnoreCase) =
+                SendDlgItemMessageW(h, LOWORD(w), BM_GETCHECK, 0, 0) == BST_CHECKED;
+            RECT place{};
+            GetWindowRect(h, &place);
+            auto previous = owner.compareIds;
+            owner.compareIds = {state->leftId, state->rightId};
+            owner.guard([&] { owner.compare(); });
+            owner.compareIds = previous;
+            if (owner.compareWindow && owner.compareWindow != h) {
+                SetWindowPos(owner.compareWindow, nullptr, place.left, place.top, place.right - place.left,
+                             place.bottom - place.top, SWP_NOZORDER);
+                PostMessageW(h, WM_CLOSE, 0, 0);
+            }
+        }
         return 0;
     case WM_NOTIFY: {
         auto n = reinterpret_cast<SCNotification *>(l);
@@ -106,8 +130,16 @@ void App::compare() {
     auto right = lines(textRange(pair[1]->editor, 0, sci(pair[1]->editor, SCI_GETLENGTH)));
     if (left.size() + right.size() > 400000)
         fail(L"비교는 두 문서 합계 400,000줄 이하에서 지원합니다.");
-    auto rows = diffLines(left, right);
-    auto state = new Comparison{this};
+    // Match lines on their normalised form, but always show the original text.
+    std::vector<std::string> leftKeys, rightKeys;
+    if (compareIgnoreSpace || compareIgnoreCase) {
+        for (auto &line : left)
+            leftKeys.push_back(compareKey(line, compareIgnoreSpace, compareIgnoreCase));
+        for (auto &line : right)
+            rightKeys.push_back(compareKey(line, compareIgnoreSpace, compareIgnoreCase));
+    }
+    auto rows = compareIgnoreSpace || compareIgnoreCase ? diffLines(leftKeys, rightKeys) : diffLines(left, right);
+    auto state = new Comparison{this, pair[0]->id, pair[1]->id};
     WNDCLASSEXW cls{sizeof(cls)};
     cls.hInstance = instance;
     cls.lpfnWndProc = compareProc;
@@ -126,11 +158,17 @@ void App::compare() {
     }
     compareWindow = h;
     for (auto item : {std::pair{510, L"다음 차이  F7"}, std::pair{511, L"이전 차이  Shift+F7"},
+                      std::pair{513, L"공백 무시"}, std::pair{514, L"대소문자 무시"},
                       std::pair{512, L"비교 시점의 읽기 전용 스냅샷"}}) {
+        bool box = item.first == 513 || item.first == 514;
         auto control = CreateWindowExW(
-            0, item.first == 512 ? L"STATIC" : L"BUTTON", item.second, WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0,
-            0, 1, 1, h, reinterpret_cast<HMENU>(static_cast<INT_PTR>(item.first)), instance, nullptr);
+            0, item.first == 512 ? L"STATIC" : L"BUTTON", item.second,
+            WS_CHILD | WS_VISIBLE | WS_TABSTOP | (box ? BS_AUTOCHECKBOX : 0), 0, 0, 1, 1, h,
+            reinterpret_cast<HMENU>(static_cast<INT_PTR>(item.first)), instance, nullptr);
         SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+        if (box)
+            SendMessageW(control, BM_SETCHECK,
+                         (item.first == 513 ? compareIgnoreSpace : compareIgnoreCase) ? BST_CHECKED : BST_UNCHECKED, 0);
     }
     state->left = CreateWindowExW(0, L"Scintilla", nullptr,
                                   WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL, 0, 0, 1, 1, h,
@@ -170,7 +208,34 @@ void App::compare() {
             sci(state->right, SCI_MARKERADD, i, row.right < 0 ? 22 : 20);
         }
     }
-    auto info = L"변경 " + std::to_wstring(state->changes.size()) + L"줄 · 읽기 전용 스냅샷";
+    // Mark the characters that differ inside each changed pair (kind 3: a line on both sides).
+    auto &colours = palette();
+    for (auto [editor, indicator, colour] :
+         {std::tuple{state->left, inlineRemoved, colours.dark ? RGB(190, 70, 80) : RGB(255, 120, 120)},
+          std::tuple{state->right, inlineAdded, colours.dark ? RGB(60, 165, 95) : RGB(70, 190, 100)}}) {
+        sci(editor, SCI_INDICSETSTYLE, indicator, INDIC_FULLBOX);
+        sci(editor, SCI_INDICSETFORE, indicator, colour);
+        sci(editor, SCI_INDICSETALPHA, indicator, 110);
+        sci(editor, SCI_INDICSETOUTLINEALPHA, indicator, 160);
+        sci(editor, SCI_INDICSETUNDER, indicator, 1);
+    }
+    size_t marked = 0;
+    for (size_t i = 0; i < rows.size() && marked < 20000; i++) {
+        auto row = rows[i];
+        if (row.kind != 3 || left[row.left].size() > 10000 || right[row.right].size() > 10000)
+            continue;
+        marked++;
+        auto parts = inlineDiff(left[row.left], right[row.right]);
+        for (auto [editor, indicator, ranges] : {std::tuple{state->left, inlineRemoved, &parts.left},
+                                                 std::tuple{state->right, inlineAdded, &parts.right}}) {
+            Pos lineStart = sci(editor, SCI_POSITIONFROMLINE, i);
+            sci(editor, SCI_SETINDICATORCURRENT, indicator);
+            for (auto [from, to] : *ranges)
+                sci(editor, SCI_INDICATORFILLRANGE, lineStart + static_cast<Pos>(from), static_cast<Pos>(to - from));
+        }
+    }
+    auto info = L"변경 " + std::to_wstring(state->changes.size()) + L"줄 · 읽기 전용 스냅샷" +
+                (compareIgnoreSpace || compareIgnoreCase ? L" · 무시 옵션 적용" : L"");
     SetWindowTextW(GetDlgItem(h, 512), info.c_str());
     themeDialog(h);
     ShowWindow(h, SW_SHOWNORMAL);

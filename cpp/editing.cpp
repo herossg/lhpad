@@ -238,7 +238,7 @@ void App::showFind(bool replace) {
     updateFind();
     EnableWindow(GetDlgItem(findWindow, 101), replace);
     EnableWindow(GetDlgItem(findWindow, 202), replace);
-    EnableWindow(GetDlgItem(findWindow, 203), replace && d && !d->binary);
+    EnableWindow(GetDlgItem(findWindow, 203), replace);
     SetFocus(GetDlgItem(findWindow, 100));
     SendDlgItemMessageW(findWindow, 100, EM_SETSEL, 0, -1);
 }
@@ -251,8 +251,8 @@ void App::updateFind() {
         EnableWindow(GetDlgItem(findWindow, id), !hex && !busy && !playing);
     for (int id : {11, 106})
         ShowWindow(GetDlgItem(findWindow, id), hex ? SW_SHOW : SW_HIDE);
-    EnableWindow(GetDlgItem(findWindow, 201), !hex && !busy);
-    EnableWindow(GetDlgItem(findWindow, 203), !hex && !busy);
+    EnableWindow(GetDlgItem(findWindow, 201), !busy);
+    EnableWindow(GetDlgItem(findWindow, 203), !busy);
     EnableWindow(GetDlgItem(findWindow, 205), busy);
     EnableWindow(GetDlgItem(findWindow, 206), !hex && !busy);
     EnableWindow(GetDlgItem(findWindow, 207), !hex && !busy);
@@ -323,11 +323,19 @@ bool App::findNext(bool backwards, bool wrapSearch) {
         auto needle = searchBytes();
         if (needle.empty())
             return false;
-        Pos start =
-            std::min(d->binary->size(), std::max(d->caret, d->anchor) + (d->caret == d->anchor ? 0 : 0));
-        auto found = d->binary->find(needle, start, &cancel);
-        if (found < 0 && wrapSearch && start && !cancel)
-            found = d->binary->find(needle, 0, &cancel);
+        Pos found = -1;
+        if (backwards) {
+            // Search before the selection start, wrapping from the end of the file.
+            Pos start = std::min(d->caret, d->anchor);
+            found = d->binary->findBackward(needle, start, &cancel);
+            if (found < 0 && wrapSearch && !cancel)
+                found = d->binary->findBackward(needle, d->binary->size() + 1, &cancel);
+        } else {
+            Pos start = std::min(d->binary->size(), std::max(d->caret, d->anchor));
+            found = d->binary->find(needle, start, &cancel);
+            if (found < 0 && wrapSearch && start && !cancel)
+                found = d->binary->find(needle, 0, &cancel);
+        }
         if (found < 0) {
             searchMessage = cancel ? "검색을 중지했습니다." : "일치하는 항목이 없습니다.";
             return false;
@@ -394,22 +402,42 @@ Pos App::countMatches(bool replacing) {
     Pos total = 0;
     try {
         if (d->binary) {
-            if (replacing)
-                fail(L"Hex에서는 같은 길이의 개별 바꾸기를 사용하세요.");
             auto needle = searchBytes();
             if (needle.empty()) {
                 busy = wasBusy;
                 return 0;
             }
+            Bytes replacement;
+            if (replacing) {
+                auto original = search.query;
+                search.query = search.replacement;
+                try {
+                    replacement = searchBytes();
+                } catch (...) {
+                    search.query = original;
+                    throw;
+                }
+                search.query = original;
+            }
+            std::vector<Pos> offsets;
             Pos pos = 0;
             while (!cancel) {
                 auto found = d->binary->find(needle, pos, &cancel);
                 if (found < 0)
                     break;
                 total++;
+                if (replacing)
+                    offsets.push_back(found);
                 pos = found + needle.size();
                 pump();
             }
+            if (replacing && !cancel && !offsets.empty()) {
+                // One pass, one undo step; the replacement may be shorter or longer than the match.
+                d->binary->replaceAll(offsets, static_cast<Pos>(needle.size()), replacement);
+                d->anchor = d->caret = std::min(d->caret, d->binary->size());
+                hexChanged(*d);
+            } else if (replacing && cancel)
+                total = 0; // Stopped before replacing: the file is unchanged.
         } else {
             std::vector<Document *> targets;
             if (replacing && search.allTabs) {
@@ -513,11 +541,11 @@ bool App::replaceOne() {
             throw;
         }
         search.query = original;
-        if (replacement.size() != needle.size())
-            fail(L"Hex 바꾸기는 원본과 같은 바이트 길이만 지원합니다.");
         auto a = std::min(d->caret, d->anchor), b = std::max(d->caret, d->anchor);
         if (b - a == static_cast<Pos>(needle.size()) && d->binary->read(a, b - a) == needle) {
+            // Lengths may differ: the piece table inserts or removes bytes and shifts the rest.
             d->binary->replace(a, b - a, replacement);
+            d->anchor = d->caret = a + static_cast<Pos>(replacement.size());
             hexChanged(*d);
         }
         return findNext();

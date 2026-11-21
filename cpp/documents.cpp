@@ -601,7 +601,9 @@ void App::backup() {
                     {"OutlineVisible", outlineVisible},
                     {"DarkMode", darkMode},
                     {"AutoComplete", autoComplete},
-                    {"CompleteMinChars", completeMinChars}};
+                    {"CompleteMinChars", completeMinChars},
+                    {"CompareIgnoreSpace", compareIgnoreSpace},
+                    {"CompareIgnoreCase", compareIgnoreCase}};
     Json recent = Json::array();
     for (auto &p : recentFiles)
         recent.push_back(narrow(p.wstring()));
@@ -661,6 +663,8 @@ void App::restore() {
     findSubfolders = session.value("FindSubfolders", true);
     bool showOutlinePanel = session.value("OutlineVisible", false);
     autoComplete = session.value("AutoComplete", true);
+    compareIgnoreSpace = session.value("CompareIgnoreSpace", false);
+    compareIgnoreCase = session.value("CompareIgnoreCase", false);
     if (session.contains("CompleteMinChars") && session["CompleteMinChars"].is_number_integer())
         completeMinChars = std::clamp(session["CompleteMinChars"].get<int>(), 1, 10);
     if (session.contains("DarkMode") && session["DarkMode"].is_boolean())

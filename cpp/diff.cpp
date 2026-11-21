@@ -115,4 +115,88 @@ std::vector<DiffRow> diffLines(const std::vector<std::string> &left, const std::
     }
     return aligned;
 }
+std::string compareKey(const std::string &line, bool ignoreSpace, bool ignoreCase) {
+    std::string key;
+    key.reserve(line.size());
+    for (char c : line) {
+        if (ignoreSpace && (c == ' ' || c == '\t'))
+            continue;
+        key += ignoreCase && c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c;
+    }
+    return key;
+}
+namespace {
+struct CodePoints {
+    std::vector<uint32_t> value;
+    std::vector<size_t> start; // Byte offset of each code point, plus the total length at the end.
+};
+CodePoints split(const std::string &s) {
+    CodePoints out;
+    for (size_t i = 0; i < s.size();) {
+        auto c = static_cast<unsigned char>(s[i]);
+        size_t n = c < 0x80 ? 1 : (c >> 5) == 6 ? 2 : (c >> 4) == 14 ? 3 : (c >> 3) == 30 ? 4 : 1;
+        n = std::min(n, s.size() - i);
+        uint32_t v = n == 1 ? c : c & (0x7F >> n);
+        for (size_t k = 1; k < n; k++)
+            v = v << 6 | (static_cast<unsigned char>(s[i + k]) & 0x3F);
+        out.value.push_back(v);
+        out.start.push_back(i);
+        i += n;
+    }
+    out.start.push_back(s.size());
+    return out;
+}
+std::vector<std::pair<size_t, size_t>> ranges(const CodePoints &cp, const std::vector<bool> &changed) {
+    std::vector<std::pair<size_t, size_t>> out;
+    for (size_t i = 0; i < changed.size();) {
+        if (!changed[i]) {
+            i++;
+            continue;
+        }
+        size_t j = i;
+        while (j < changed.size() && changed[j])
+            j++;
+        out.emplace_back(cp.start[i], cp.start[j]);
+        i = j;
+    }
+    return out;
+}
+} // namespace
+InlineDiff inlineDiff(const std::string &left, const std::string &right) {
+    auto a = split(left), b = split(right);
+    size_t n = a.value.size(), m = b.value.size(), prefix = 0, suffix = 0;
+    while (prefix < n && prefix < m && a.value[prefix] == b.value[prefix])
+        prefix++;
+    while (suffix < n - prefix && suffix < m - prefix && a.value[n - 1 - suffix] == b.value[m - 1 - suffix])
+        suffix++;
+    std::vector<bool> changedA(n, false), changedB(m, false);
+    size_t x0 = prefix, x1 = n - suffix, y0 = prefix, y1 = m - suffix;
+    size_t w = x1 - x0, h = y1 - y0;
+    if (w && h && w * h <= 250000) {
+        // Character LCS on the differing middle part, so "a1b2" vs "a3b4" marks only the digits.
+        std::vector<uint16_t> table((w + 1) * (h + 1), 0);
+        auto at = [&](size_t x, size_t y) -> uint16_t & { return table[x * (h + 1) + y]; };
+        for (size_t x = w; x-- > 0;)
+            for (size_t y = h; y-- > 0;)
+                at(x, y) = a.value[x0 + x] == b.value[y0 + y]
+                               ? static_cast<uint16_t>(at(x + 1, y + 1) + 1)
+                               : std::max(at(x + 1, y), at(x, y + 1));
+        size_t x = 0, y = 0;
+        while (x < w || y < h) {
+            if (x < w && y < h && a.value[x0 + x] == b.value[y0 + y]) {
+                x++;
+                y++;
+            } else if (y >= h || (x < w && at(x + 1, y) >= at(x, y + 1)))
+                changedA[x0 + x++] = true;
+            else
+                changedB[y0 + y++] = true;
+        }
+    } else {
+        for (size_t i = x0; i < x1; i++)
+            changedA[i] = true;
+        for (size_t i = y0; i < y1; i++)
+            changedB[i] = true;
+    }
+    return {ranges(a, changedA), ranges(b, changedB)};
+}
 } // namespace lp

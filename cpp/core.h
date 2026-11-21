@@ -148,6 +148,10 @@ class BinaryBuffer {
     void redoEdit();
     void save(const fs::path &target);
     Pos find(const Bytes &needle, Pos start, std::atomic_bool *cancel = nullptr) const;
+    // Last match that starts before `before`, or -1.
+    Pos findBackward(const Bytes &needle, Pos before, std::atomic_bool *cancel = nullptr) const;
+    // Replaces `remove` bytes at every offset (ascending, non-overlapping) in one pass and one undo step.
+    void replaceAll(const std::vector<Pos> &offsets, Pos remove, const Bytes &insert);
 };
 struct Language {
     std::string name, display, lexer;
@@ -204,6 +208,13 @@ struct DiffRow {
     int kind = 0;
 };
 std::vector<DiffRow> diffLines(const std::vector<std::string> &a, const std::vector<std::string> &b);
+// Line used only for matching when comparing: whitespace removed and/or lower-cased.
+std::string compareKey(const std::string &line, bool ignoreSpace, bool ignoreCase);
+// Byte ranges [start, end) that differ between two versions of a line, on character boundaries.
+struct InlineDiff {
+    std::vector<std::pair<size_t, size_t>> left, right;
+};
+InlineDiff inlineDiff(const std::string &left, const std::string &right);
 std::vector<std::string> lines(const std::string &text);
 std::string sha256(const BinaryBuffer &data, std::atomic_bool *cancel = nullptr);
 void configureModernExplorer(bool enable);
