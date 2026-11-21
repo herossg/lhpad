@@ -1626,6 +1626,51 @@ int runTests(App &a, bool full) {
                   "Failed staged reload preserves existing unsaved text and dirty state");
             DestroyWindow(restored.window);
         }
+        {
+            // Saved tabs whose file was deleted: warn once at startup, then drop them from the session.
+            struct RestoreGlobal {
+                App *original;
+                ~RestoreGlobal() { app = original; }
+            } global{&a};
+            auto missingProfile = fixture / L"missing-file-profile";
+            disk::create_directories(missingProfile);
+            auto keptPath = write(L"still here.txt", "kept\n");
+            auto tab = [](const std::string &id, const fs::path &path) {
+                return Json{{"Id", id},           {"Path", narrow(path.wstring())}, {"Name", narrow(path.filename().wstring())},
+                            {"Encoding", Encoding{}}, {"Language", "normal"},       {"Binary", false},
+                            {"Dirty", false},     {"Snapshot", nullptr}};
+            };
+            writeJson(missingProfile / L"session.json",
+                      {{"Version", 1},
+                       {"Active", 0},
+                       {"Documents", Json::array({tab("gone", fixture / L"deleted since last run.txt"), tab("kept", keptPath)})}},
+                      false);
+            {
+                App first(a.instance, missingProfile);
+                first.silentRestore = true;
+                first.create(SW_HIDE);
+                KillTimer(first.window, 1);
+                first.start();
+                check(first.missingOnStartup.size() == 1 && first.missingOnStartup[0].ends_with(L"deleted since last run.txt") &&
+                          first.docs.size() == 1 && first.current() && first.current()->path == keptPath,
+                      "A saved tab whose file is gone is reported once while the other tabs open");
+                first.backup();
+                auto saved = readJson(missingProfile / L"session.json");
+                bool dropped = saved["Documents"].size() == 1 && saved["Documents"][0]["Id"] == "kept";
+                check(dropped, "The missing file is left out of the next session");
+                DestroyWindow(first.window);
+            }
+            {
+                App second(a.instance, missingProfile);
+                second.silentRestore = true;
+                second.create(SW_HIDE);
+                KillTimer(second.window, 1);
+                second.start();
+                check(second.missingOnStartup.empty() && second.docs.size() == 1,
+                      "The next start opens the remaining tabs without warning again");
+                DestroyWindow(second.window);
+            }
+        }
         results.push_back("ALL NATIVE TESTS PASSED");
         exit = 0;
     } catch (const std::exception &e) {

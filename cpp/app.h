@@ -221,6 +221,10 @@ class App {
     Languages languages;
     std::vector<std::shared_ptr<Document>> docs;
     Json unavailable = Json::array();
+    // Saved files from the last session that no longer exist on disk. Warned about once at startup and
+    // not written back to the session, so the next start does not warn again.
+    std::vector<std::wstring> missingOnStartup;
+    bool silentRestore = false; // Tests: collect missingOnStartup without showing the message box.
     int active = -1, untitled = 0;
     int hotTabClose = -1;
     std::string pressedTabClose;

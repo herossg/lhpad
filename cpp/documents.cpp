@@ -690,6 +690,11 @@ void App::restore() {
                                     ? wide(s["Snapshot"].get<std::string>())
                                     : L"";
             bool recover = (dirty || path.empty()) && !snapshot.empty();
+            if (!recover && !path.empty() && !disk::exists(path)) {
+                // Nothing unsaved to lose: report it once and leave it out of the next session.
+                missingOnStartup.push_back(path.wstring());
+                continue;
+            }
             if (recover && !disk::exists(snapshot))
                 fail(L"복구 스냅샷을 찾을 수 없습니다.");
             auto source = recover ? snapshot : path;
@@ -760,6 +765,17 @@ void App::restore() {
     if (!errors.empty())
         message(L"일부 탭 복원을 보류했습니다. 기존 복구 자료는 보존됩니다.\n" + wide(errors), L"세션 복원",
                 MB_OK | MB_ICONWARNING);
+    if (!missingOnStartup.empty() && !silentRestore) {
+        std::wstring list;
+        for (size_t i = 0; i < missingOnStartup.size() && i < 20; i++)
+            list += L"\n• " + missingOnStartup[i];
+        if (missingOnStartup.size() > 20)
+            list += L"\n… 외 " + std::to_wstring(missingOnStartup.size() - 20) + L"개";
+        message(L"이전에 열려 있던 파일 " + std::to_wstring(missingOnStartup.size()) +
+                    L"개를 디스크에서 찾을 수 없어 열지 않았습니다.\n이 파일들은 복원 목록에서 빠지므로 다음 "
+                    L"실행부터는 이 안내가 나오지 않습니다." + list,
+                L"세션 복원", MB_OK | MB_ICONWARNING);
+    }
 }
 void App::savePlacement() {
     WINDOWPLACEMENT p{sizeof(p)};
